@@ -78,6 +78,7 @@ export function makerApps(): HTMLElement {
     h('h2', { text: t('links.heading') }),
     h('div', { className: 'maker-apps__item' }, [
       h('p', { text: t('links.tameru') }),
+      h('p', { className: 'maker-apps__desc', text: t('links.tameruDesc') }),
       go(t('links.tameruButton'), config.links.tameru, 'btn btn--outline btn--link'),
     ]),
     h('div', { className: 'maker-apps__item' }, [go(t('common.portalLink'), config.links.portal, 'btn btn--outline btn--link')]),

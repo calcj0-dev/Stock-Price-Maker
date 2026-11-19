@@ -921,3 +921,7 @@ button {
   font-size: 14px;
   margin-bottom: 8px;
 }
+.maker-apps__desc {
+  font-size: 12px;
+  color: var(--text-sub);
+}
