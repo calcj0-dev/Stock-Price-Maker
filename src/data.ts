@@ -25,7 +25,18 @@ export type GameConfig = {
 };
 export type Messages = typeof jaJson;
 
-const PEOPLE_PER_SIDE = 10;
+/** 片側の人数の範囲（人数はニュースで変わる。オーナー 2026-11-19）。多すぎると盤が混み合う */
+const PEOPLE_MIN = 1;
+const PEOPLE_MAX = 14;
+/** 同じ側の人どうしの希望額の最小の差（盤で顔と数字が重ならないように） */
+const MIN_GAP = 40;
+
+function minGap(values: number[]): number {
+  const v = [...values].sort((a, b) => a - b);
+  let g = Infinity;
+  for (let i = 1; i < v.length; i++) g = Math.min(g, v[i]! - v[i - 1]!);
+  return g;
+}
 const DAYS = 5;
 const PORTAL_PREFIX = 'https://app-lab-rust.vercel.app';
 
@@ -52,8 +63,10 @@ export function validateData(market: Market, config: GameConfig, messages: unkno
   market.days.forEach((d, i) => {
     const tag = `day ${i + 1}`;
     if (d.day !== i + 1) errors.push(`${tag}: day number is ${d.day}`);
-    if (d.buyers.length !== PEOPLE_PER_SIDE) errors.push(`${tag}: buyers ${d.buyers.length}`);
-    if (d.sellers.length !== PEOPLE_PER_SIDE) errors.push(`${tag}: sellers ${d.sellers.length}`);
+    for (const [side, list] of [['buyers', d.buyers], ['sellers', d.sellers]] as const) {
+      if (list.length < PEOPLE_MIN || list.length > PEOPLE_MAX) errors.push(`${tag}: ${side} ${list.length} people (allowed ${PEOPLE_MIN}-${PEOPLE_MAX})`);
+      if (minGap(list) < MIN_GAP) errors.push(`${tag}: ${side} gap ${minGap(list)} < ${MIN_GAP}`);
+    }
     for (const v of [...d.buyers, ...d.sellers]) if (!onGrid(v)) errors.push(`${tag}: price ${v} is off the slider grid`);
     const r = findAnswer(d, slider);
     if (r.prices.length !== 1) errors.push(`${tag}: answer is not unique (${r.prices.join(',')})`);

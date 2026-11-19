@@ -14,9 +14,9 @@ describe('T-01 正解の値段', () => {
     expect(r.prices).toEqual([d.answer]);
     expect(r.max).toBe(d.maxVolume);
   });
-  it('正解は 1,000 → 1,060 → 1,120 → 1,040 → 980円、満点43件', () => {
+  it('正解は 1,000 → 1,060 → 1,120 → 1,040 → 980円、満点42組', () => {
     expect(answers).toEqual([1000, 1060, 1120, 1040, 980]);
-    expect(market.totalMaxVolume).toBe(43);
+    expect(market.totalMaxVolume).toBe(42);
   });
 });
 
@@ -52,14 +52,14 @@ describe('T-02 光る人と成立件数', () => {
 
 describe('T-03 点数と称号（sim/validate_result.md の8通り）', () => {
   const cases: [string, number[], number[], number, string][] = [
-    ['5日とも正解', answers, [7, 8, 9, 10, 9], 100, 't_legend'],
-    ['毎日50円ずれ', answers.map((a) => a + 50), [5, 7, 8, 9, 8], 86, 't_novice'],
-    ['毎日1,000円のまま', [1000, 1000, 1000, 1000, 1000], [7, 7, 7, 9, 8], 88, 't_still'],
-    ['1日遅れ', [700, 1000, 1060, 1120, 1040], [1, 7, 8, 9, 7], 74, 't_lost'],
-    ['ニュースと逆', [1000, 940, 880, 960, 1020], [7, 5, 4, 8, 8], 74, 't_lost'],
-    ['安すぎ（毎日800円）', Array(5).fill(800), [2, 2, 2, 5, 5], 37, 't_still'],
-    ['高すぎ（毎日1,400円）', Array(5).fill(1400), [0, 1, 3, 3, 0], 16, 't_still'],
-    ['1日目だけ外す（950円）', [950, ...answers.slice(1)], [5, 8, 9, 10, 9], 95, 't_pro'],
+    ['5日とも正解', answers, [7, 8, 8, 10, 9], 100, 't_legend'],
+    ['毎日50円ずれ', answers.map((a) => a + 50), [5, 7, 7, 9, 8], 86, 't_novice'],
+    ['毎日1,000円のまま', [1000, 1000, 1000, 1000, 1000], [7, 7, 6, 9, 8], 88, 't_still'],
+    ['1日遅れ', [700, 1000, 1060, 1120, 1040], [1, 7, 7, 8, 7], 71, 't_lost'],
+    ['ニュースと逆', [1000, 940, 880, 960, 1020], [7, 5, 3, 8, 8], 74, 't_lost'],
+    ['安すぎ（毎日800円）', Array(5).fill(800), [3, 3, 2, 5, 5], 43, 't_still'],
+    ['高すぎ（毎日1,400円）', Array(5).fill(1400), [0, 1, 3, 3, 0], 17, 't_still'],
+    ['1日目だけ外す（950円）', [950, ...answers.slice(1)], [5, 8, 8, 10, 9], 95, 't_pro'],
   ];
   it.each(cases)('%s', (_name, prices, vols, sc, titleId) => {
     const v = days.map((d, i) => volume(d, prices[i]!).volume);

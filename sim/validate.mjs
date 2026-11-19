@@ -7,7 +7,7 @@ let ok = true;
 const total = M.days.reduce((a, d) => a + d.maxVolume, 0);
 for (const d of M.days) {
   const r = findAnswer(d, M.slider);
-  const good = r.prices.length === 1 && r.prices[0] === d.answer && r.max === d.maxVolume && d.buyers.length === 10 && d.sellers.length === 10;
+  const good = r.prices.length === 1 && r.prices[0] === d.answer && r.max === d.maxVolume && d.buyers.length > 0 && d.sellers.length > 0;
   if (!good) ok = false;
   console.log(`${d.day}日目 正解 ${r.prices.join(',')}円 最大 ${r.max}件 ${good ? 'OK' : '★データと合わない'}`);
 }

@@ -134,8 +134,20 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
     },
     slideFrom(prev, ms) {
       if (ms <= 0) return Promise.resolve();
-      buys.forEach((x, i) => (x.el.style.top = `${pos(prev.buyers[i] ?? day.buyers[i]!)}%`));
-      sells.forEach((x, i) => (x.el.style.top = `${pos(prev.sellers[i] ?? day.sellers[i]!)}%`));
+      // 前の日もいた人は前の位置から動く。新しく来た人はふわっと現れ、帰った人はすっと消える（人数はニュースで変わる）
+      const stay = (list: { el: HTMLElement }[], prevList: number[]) =>
+        list.forEach((x, i) => {
+          const v = prevList[i];
+          if (v === undefined) x.el.classList.add('arrive');
+          else x.el.style.top = `${pos(v)}%`;
+        });
+      stay(buys, prev.buyers);
+      stay(sells, prev.sellers);
+      const leaving = [
+        ...prev.buyers.slice(day.buyers.length).map((v) => rung('buy', v).el),
+        ...prev.sellers.slice(day.sellers.length).map((v) => rung('sell', v).el),
+      ];
+      el.append(...leaving);
       el.classList.add('sliding');
       el.style.setProperty('--slide-ms', `${ms}ms`);
       return new Promise((resolve) => {
@@ -144,8 +156,11 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
           requestAnimationFrame(() => {
             buys.forEach((x, i) => (x.el.style.top = `${pos(day.buyers[i]!)}%`));
             sells.forEach((x, i) => (x.el.style.top = `${pos(day.sellers[i]!)}%`));
+            for (const x of [...buys, ...sells]) x.el.classList.remove('arrive');
+            for (const g of leaving) g.classList.add('gone');
             setTimeout(() => {
               el.classList.remove('sliding');
+              for (const g of leaving) g.remove();
               resolve();
             }, ms);
           }),

@@ -281,12 +281,6 @@ button {
   background: var(--accent);
   transform: scale(1.3);
 }
-
-/* ---- S3 セリ ---- */
-.screen--auction {
-  position: relative;
-  padding-bottom: 12px;
-}
 .auction-head {
   display: flex;
   align-items: center;
@@ -321,111 +315,14 @@ button {
   background: var(--warn);
 }
 
-.queues {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
-}
-.queue__title {
-  font-size: 13px;
-  text-align: center;
-  padding: 2px 0;
-  border-radius: 6px;
-  margin-bottom: 4px;
-}
-.queue__title--buy {
-  background: var(--buy-soft);
-  color: var(--buy);
-}
-.queue__title--sell {
-  background: var(--sell-soft);
-  color: var(--sell);
-}
-.queue ol {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 3px;
-}
-.queue__row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-}
-.queue__row--sell {
-  flex-direction: row-reverse;
-}
-.bubble {
-  flex: 1;
-  font-size: 12px;
-  line-height: 1.2;
-  padding: 5px 6px;
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--off-text);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  transition: background 0.08s, color 0.08s;
-}
-.queue__row--sell .bubble {
-  text-align: right;
-}
-.queue__row--buy.on .bubble {
-  background: var(--buy-soft);
-  color: var(--buy);
-  font-weight: 700;
-}
-.queue__row--sell.on .bubble {
-  background: var(--sell-soft);
-  color: var(--sell);
-  font-weight: 700;
-}
-
-.controls {
-  margin-top: auto;
-  padding-top: 10px;
-  display: grid;
-  gap: 8px;
-}
-.price {
-  display: block;
-  text-align: center;
-  font-size: 40px;
-  font-weight: 800;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-.slider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .btn--fine {
   width: auto;
   min-width: 64px;
   min-height: 44px;
   font-size: 14px;
 }
-.slider {
-  flex: 1;
-  height: 44px;
-  margin: 0;
-  touch-action: none;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.slider::-webkit-slider-thumb {
-  width: 28px;
-  height: 28px;
-}
-/* 誤タップを防ぐため、つまみから少し離す（設計書 5.7） */
 .btn--decide {
   margin-top: 14px;
-}
-.decided .controls {
-  visibility: hidden;
 }
 
 /* ---- S4 答え合わせ（セリの上に重ねる） ---- */
@@ -455,12 +352,6 @@ button {
   font-size: 13px;
   font-weight: 700;
   color: var(--warn);
-}
-.reveal__price {
-  font-size: 28px;
-  font-weight: 800;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
 }
 .reveal__judge {
   font-size: 18px;
@@ -666,9 +557,6 @@ button {
 .rung--sell {
   left: calc(50% + var(--axis) / 2 + 6px);
 }
-.rung .person {
-  transform: scale(0.8);
-}
 .rung--buy.on {
   color: var(--buy);
   font-weight: 800;
@@ -677,8 +565,7 @@ button {
   color: var(--sell);
   font-weight: 800;
 }
-.price-line,
-.answer-line {
+.price-line {
   position: absolute;
   left: 0;
   right: 0;
@@ -703,25 +590,6 @@ button {
   font-weight: 800;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-.answer-line {
-  border-top: 2px dashed var(--answer);
-  z-index: 1;
-}
-.answer-line[hidden] {
-  display: none;
-}
-.answer-line span {
-  position: absolute;
-  right: 4px;
-  transform: translateY(-50%);
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 2px solid var(--answer);
-  background: var(--bg);
-  color: var(--answer);
-  font-size: 12px;
-  font-weight: 800;
 }
 .ladder-controls {
   margin-top: 10px;
@@ -838,13 +706,33 @@ button {
     stroke-dashoffset: 0;
   }
 }
+/* 人は線より手前に出す（線の上にいる人の数字が隠れないように）。値段の札は真ん中の列なので重ならない */
 .rung {
-  z-index: 2;
+  z-index: 5;
+}
+.rung__price {
+  text-shadow: 0 0 3px var(--bg), 0 0 3px var(--bg), 0 0 2px var(--bg);
 }
 
 /* 案C：ニュースで行列が動く */
 .board.sliding .rung {
-  transition: top var(--slide-ms, 800ms) cubic-bezier(0.3, 0.7, 0.3, 1);
+  transition:
+    top var(--slide-ms, 800ms) cubic-bezier(0.3, 0.7, 0.3, 1),
+    opacity var(--slide-ms, 800ms) ease,
+    transform var(--slide-ms, 800ms) ease;
+}
+/* 新しく来た人：ふわっと現れる。帰った人：外側へすっと消える */
+.rung.arrive {
+  opacity: 0;
+  transform: translateY(-50%) scale(0.4);
+}
+.rung--buy.gone {
+  opacity: 0;
+  transform: translate(-40px, -50%);
+}
+.rung--sell.gone {
+  opacity: 0;
+  transform: translate(40px, -50%);
 }
 
 /* もう1本の線（答え合わせ＝正解、結果画面＝あなたの値段） */
@@ -894,28 +782,6 @@ button {
 }
 .board:not(.board--drag) {
   cursor: default;
-}
-
-/* 案G・H：セリ人の仕事、練習の案内 */
-.role-intro {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--buy-soft);
-  font-size: 14px;
-  font-weight: 700;
-}
-.goal--practice {
-  min-height: 42px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: #fff6d6;
-  font-size: 13px;
-  line-height: 1.5;
-}
-.practice .time-left {
-  font-size: 13px;
-  color: var(--text-sub);
 }
 
 /* 案B：結果画面で正解を見る */

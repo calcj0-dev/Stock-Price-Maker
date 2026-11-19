@@ -40,14 +40,3 @@ export function face(side: 'buy' | 'sell'): HTMLElement {
   return h('span', { className: `face face--${side}`, attrs: { 'aria-hidden': 'true' } }, [h('span', { className: 'face__mouth' })]);
 }
 
-/** 中央に出す小さな重ね表示（遊び方など） */
-export function openDialog(heading: string, body: string): void {
-  const dialog = h('dialog', { className: 'modal' }, [
-    h('h2', { text: heading }),
-    h('p', { text: body }),
-    h('button', { className: 'btn btn--sub', text: t('common.close'), attrs: { type: 'button' }, on: { click: () => dialog.close() } }),
-  ]);
-  dialog.addEventListener('close', () => dialog.remove());
-  document.body.append(dialog);
-  dialog.showModal();
-}

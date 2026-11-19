@@ -10,10 +10,18 @@ describe('T-07 データの検査', () => {
   it('今のデータは OK', () => {
     expect(check()).toEqual([]);
   });
-  it('人数が違うと止まる', () => {
+  it('人数が範囲外だと止まる', () => {
     const m = clone(market);
-    m.days[0]!.buyers.pop();
-    expect(check(m).join()).toMatch(/buyers 9/);
+    m.days[0]!.buyers = [];
+    expect(check(m).join()).toMatch(/buyers 0 people/);
+    const m2 = clone(market);
+    m2.days[1]!.sellers = Array.from({ length: 15 }, (_, i) => 500 + i * 50);
+    expect(check(m2).join()).toMatch(/sellers 15 people/);
+  });
+  it('同じ側の希望額が近すぎると止まる', () => {
+    const m = clone(market);
+    m.days[0]!.buyers[8] = 920;
+    expect(check(m).join()).toMatch(/buyers gap 30 < 40/);
   });
   it('正解が2つになると止まる', () => {
     const m = clone(market);

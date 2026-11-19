@@ -54,7 +54,7 @@ describe('5日の進み方', () => {
       nextDay(g, market.days);
     }
     expect(g.phase).toBe('result');
-    expect(g.volumes).toEqual([7, 8, 9, 10, 9]);
+    expect(g.volumes).toEqual([7, 8, 8, 10, 9]);
     expect(g.judges).toEqual(['exact', 'exact', 'exact', 'exact', 'exact']);
   });
   it('値段は範囲と10円きざみに収まる', () => {
