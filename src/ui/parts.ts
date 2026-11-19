@@ -40,3 +40,47 @@ export function face(side: 'buy' | 'sell'): HTMLElement {
   return h('span', { className: `face face--${side}`, attrs: { 'aria-hidden': 'true' } }, [h('span', { className: 'face__mouth' })]);
 }
 
+
+/** 計測（GA4）を入れているか。測定 ID は環境変数 VITE_GA_ID（M5 で入れる） */
+export function hasGa(): boolean {
+  return Boolean((import.meta.env.VITE_GA_ID as string | undefined)?.trim());
+}
+
+/** プライバシーについて（M2）。GA4 を入れているかで文を切り替える（前作と同じ作り） */
+export function openPrivacy(): void {
+  const keys = hasGa()
+    ? (['privacy.p1', 'privacy.p2', 'privacy.p3', 'privacy.p4', 'privacy.p5'] as const)
+    : (['privacy.basic.p1', 'privacy.basic.p2', 'privacy.basic.p3', 'privacy.basic.p4'] as const);
+  const policyLinks = hasGa()
+    ? [externalLink(t('privacy.googlePolicy'), config.links.googlePrivacy), externalLink(t('privacy.optout'), config.links.gaOptout)]
+    : [externalLink(t('privacy.vercelPolicy'), config.links.vercelPrivacy)];
+  const dialog = h('dialog', { className: 'modal modal--privacy' }, [
+    h('h2', { text: t('privacy.heading') }),
+    ...keys.map((k) => h('p', { text: t(k) })),
+    ...policyLinks.map((a) => h('p', {}, [a])),
+    h('button', { className: 'btn btn--sub', text: t('common.close'), attrs: { type: 'button' }, on: { click: () => dialog.close() } }),
+  ]);
+  dialog.addEventListener('close', () => dialog.remove());
+  document.body.append(dialog);
+  dialog.showModal();
+}
+
+/** 「プライバシーについて」の文字リンク（タイトルと結果の下） */
+export function privacyLink(): HTMLElement {
+  return h('p', { className: 'privacy-link' }, [h('button', { className: 'link', text: t('common.privacyLink'), attrs: { type: 'button' }, on: { click: openPrivacy } })]);
+}
+
+/** 結果画面の「このゲームを作った人のアプリ」の枠：TAMERU とまとめサイト（オーナー 2026-11-19）、フォロー */
+export function makerApps(): HTMLElement {
+  const go = (text: string, href: string, className: string) =>
+    h('a', { className, text, attrs: { href, target: '_blank', rel: 'noopener' } });
+  return h('section', { className: 'card maker-apps' }, [
+    h('h2', { text: t('links.heading') }),
+    h('div', { className: 'maker-apps__item' }, [
+      h('p', { text: t('links.tameru') }),
+      go(t('links.tameruButton'), config.links.tameru, 'btn btn--outline btn--link'),
+    ]),
+    h('div', { className: 'maker-apps__item' }, [go(t('common.portalLink'), config.links.portal, 'btn btn--outline btn--link')]),
+    h('p', { className: 'maker-apps__follow' }, [externalLink(t('links.follow'), config.links.follow)]),
+  ]);
+}

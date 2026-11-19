@@ -7,7 +7,7 @@ import { t, td, yen } from '../../i18n';
 import { createBoard } from '../board';
 import { drawChart } from '../chart';
 import { button, h } from '../dom';
-import { notes, portalLink, type ScreenView } from '../parts';
+import { makerApps, notes, privacyLink, type ScreenView } from '../parts';
 
 /**
  * 案B：その日の正解を盤で見る。正解の値段で光る人と取引の組を見せ、あなたの値段は点線で重ねる
@@ -75,7 +75,8 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
     h('section', { className: 'card' }, [h('h2', { text: t('result.daily') }), daily]),
     h('section', { className: 'card card--learn' }, [h('p', { text: t('result.summary') }), h('p', { text: t('result.realWorld') })]),
     button(t('result.retry'), onRetry, 'btn btn--main'),
-    portalLink(),
+    makerApps(),
+    privacyLink(),
     notes(),
   ]);
 

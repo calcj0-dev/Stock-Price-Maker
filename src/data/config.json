@@ -71,7 +71,9 @@
   "links": {
     "portal": "https://app-lab-rust.vercel.app/?utm_source=bakage&utm_medium=game&utm_campaign=baka094",
     "tameru": "https://tameru-lovat.vercel.app/?utm_source=bakage&utm_medium=game&utm_campaign=baka094",
-    "tva": "https://trader-vs-autopilot.vercel.app/?utm_source=bakage&utm_medium=game&utm_campaign=baka094",
-    "follow": "https://x.com/shooojp19"
+    "follow": "https://x.com/shooojp19",
+    "googlePrivacy": "https://policies.google.com/privacy",
+    "gaOptout": "https://tools.google.com/dlpage/gaoptout",
+    "vercelPrivacy": "https://vercel.com/legal/privacy-policy"
   }
 }
