@@ -58,9 +58,9 @@ function start(): void {
   render();
 }
 
-/** 「セリを始める」と「遊び方」はチュートリアルから。「もう一回」はチュートリアルなしで1日目へ */
+/** タイトルの「チュートリアル」ボタンから（オーナー 2026-11-19：専用ボタン。「始める」はすぐ1日目へ） */
 function startWithTutorial(): void {
   show(tutorialScreen(start));
 }
 
-show(titleScreen(startWithTutorial, startWithTutorial));
+show(titleScreen(start, startWithTutorial));

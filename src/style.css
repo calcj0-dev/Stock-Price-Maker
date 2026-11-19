@@ -1014,3 +1014,8 @@ button {
   animation: none;
   stroke-dashoffset: 0;
 }
+.btn--outline {
+  min-height: 52px;
+  border: 2px solid var(--accent);
+  font-size: 16px;
+}
