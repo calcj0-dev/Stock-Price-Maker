@@ -1,5 +1,5 @@
-/* 色【案】（設計書 2章）：買いたい人は緑、売りたい人はオレンジ、光っていない人は薄い灰色。
-   チャートはオレンジ＝あなた、緑＝正解 */
+/* 色（U4 オーナー決定 2026-11-19）：買いたい人は緑、売りたい人はオレンジ、光っていない人は薄い灰色。
+   あなたの値段は黒（遊ぶときの線と同じ）、正解は青。1つの色に1つの意味 */
 :root {
   --bg: #ffffff;
   --surface: #f4f1ea;
@@ -12,8 +12,8 @@
   --sell-soft: #fdeedf;
   --off: #d4d0c8;
   --off-text: #a39e94;
-  --mine: #e8822a;
-  --answer: #1e9e6a;
+  --mine: #1f1d1a;
+  --answer: #2f6be0;
   --accent: #1f1d1a;
   --warn: #d93a3f;
   --app-width: 480px;
@@ -469,7 +469,7 @@ button {
 }
 .reveal__judge--exact {
   font-size: 24px;
-  color: var(--buy);
+  color: var(--answer);
 }
 .reveal__volume,
 .reveal__answer {
@@ -566,7 +566,7 @@ button {
   font-size: 14px;
 }
 .daily__judge--exact {
-  color: var(--buy);
+  color: var(--answer);
 }
 .daily__reason {
   font-size: 13px;
