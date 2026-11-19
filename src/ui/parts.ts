@@ -41,23 +41,13 @@ export function face(side: 'buy' | 'sell'): HTMLElement {
 }
 
 
-/** 計測（GA4）を入れているか。測定 ID は環境変数 VITE_GA_ID（M5 で入れる） */
-export function hasGa(): boolean {
-  return Boolean((import.meta.env.VITE_GA_ID as string | undefined)?.trim());
-}
-
-/** プライバシーについて（M2）。GA4 を入れているかで文を切り替える（前作と同じ作り） */
+/** プライバシーについて（M2）。計測は Vercel Analytics だけ（オーナー 2026-11-19。GA4 は使わない） */
 export function openPrivacy(): void {
-  const keys = hasGa()
-    ? (['privacy.p1', 'privacy.p2', 'privacy.p3', 'privacy.p4', 'privacy.p5'] as const)
-    : (['privacy.basic.p1', 'privacy.basic.p2', 'privacy.basic.p3', 'privacy.basic.p4'] as const);
-  const policyLinks = hasGa()
-    ? [externalLink(t('privacy.googlePolicy'), config.links.googlePrivacy), externalLink(t('privacy.optout'), config.links.gaOptout)]
-    : [externalLink(t('privacy.vercelPolicy'), config.links.vercelPrivacy)];
+  const keys = ['privacy.p1', 'privacy.p2', 'privacy.p3', 'privacy.p4'] as const;
   const dialog = h('dialog', { className: 'modal modal--privacy' }, [
     h('h2', { text: t('privacy.heading') }),
     ...keys.map((k) => h('p', { text: t(k) })),
-    ...policyLinks.map((a) => h('p', {}, [a])),
+    h('p', {}, [externalLink(t('privacy.vercelPolicy'), config.links.vercelPrivacy)]),
     h('button', { className: 'btn btn--sub', text: t('common.close'), attrs: { type: 'button' }, on: { click: () => dialog.close() } }),
   ]);
   dialog.addEventListener('close', () => dialog.remove());

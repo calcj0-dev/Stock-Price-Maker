@@ -21,7 +21,7 @@ export type GameConfig = {
   sounds: Record<string, unknown>;
   hashtag: string;
   storageKey: string;
-  links: { portal: string; tameru: string; follow: string; googlePrivacy: string; gaOptout: string; vercelPrivacy: string };
+  links: { portal: string; tameru: string; follow: string; vercelPrivacy: string };
 };
 export type Messages = typeof jaJson;
 
