@@ -2,9 +2,9 @@
 
 import { t } from '../../i18n';
 import { button, h } from '../dom';
-import { notes, openDialog, person, portalLink, versionLabel, type ScreenView } from '../parts';
+import { notes, person, portalLink, versionLabel, type ScreenView } from '../parts';
 
-export function titleScreen(onStart: () => void): ScreenView {
+export function titleScreen(onStart: () => void, onHow: () => void): ScreenView {
   const hero = h('div', { className: 'title-hero', attrs: { 'aria-hidden': 'true' } }, [
     h('div', { className: 'title-hero__side' }, [person('buy'), person('buy'), person('buy')]),
     h('div', { className: 'title-hero__mid', text: '¥' }),
@@ -18,7 +18,7 @@ export function titleScreen(onStart: () => void): ScreenView {
       h('h1', { className: 'title-name', text: t('app.name') }),
       h('p', { className: 'title-tagline', text: t('app.tagline') }),
       button(t('title.start'), onStart, 'btn btn--main'),
-      button(t('common.howLink'), () => openDialog(t('how.heading'), t('how.body')), 'link'),
+      button(t('common.howLink'), onHow, 'link'),
     ]),
     h('div', { className: 'title-foot' }, [portalLink(), h('p', { className: 'credit', text: t('app.credit') }), notes()]),
   ]);

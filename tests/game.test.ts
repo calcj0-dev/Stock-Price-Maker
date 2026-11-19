@@ -64,8 +64,3 @@ describe('5日の進み方', () => {
   });
 });
 
-describe('練習の日（案H）', () => {
-  it('1日目だけ時間制限なし', () => {
-    expect(config.practiceDays).toEqual([1]);
-  });
-});

@@ -1,5 +1,5 @@
 // S3 セリ（試作 案1：値段のはしご）と S4 答え合わせ
-// 案C：前の日の位置から行列が動いてから始まる。案H：練習の日は時間制限なしで手順を案内する
+// 案C：前の日の位置から行列が動いてから始まる（10秒は動き終わってから数える）
 // 成立件数は「決める」まで出さない（決定 #2）。決めたら取引の組を線でつなぐ（案A）
 
 import { createCountdown } from '../../core/countdown';
@@ -12,14 +12,9 @@ import { button, h } from '../dom';
 import { type ScreenView } from '../parts';
 import type { AuctionProps } from './auction';
 
-/** 練習の案内：上へ動かした → 下へ動かした → 決める */
-const STEP_UP = 150;
-const STEP_DOWN = 100;
-
 export function ladderScreen(p: AuctionProps): ScreenView {
   const { slider } = market;
   const { day } = p;
-  const practice = config.practiceDays.includes(day.day);
   const prevDay = market.days[day.day - 2];
   let price = clampPrice(p.startPrice, slider);
   let decided = false;
@@ -27,24 +22,9 @@ export function ladderScreen(p: AuctionProps): ScreenView {
 
   const board = createBoard(day, { markerKind: 'answer' });
 
-  // ---- 上の帯（練習の日は時間の代わりに「練習」） ----
-  const timeText = h('span', { className: 'time-left', text: practice ? t('practice.label') : '' });
+  const timeText = h('span', { className: 'time-left', text: t('play.timeLeft', { sec: config.timeLimitSec }) });
   const timeBar = h('span', { className: 'time-bar__fill' });
 
-  // ---- 目標の一言／練習の案内 ----
-  const steps = [t('practice.step1'), t('practice.step2'), t('practice.step3')];
-  let step = 0;
-  let maxSeen = price;
-  const goal = h('p', { className: practice ? 'goal goal--practice' : 'goal', text: practice ? steps[0] : t('play.goal') });
-  const advance = () => {
-    if (!practice) return;
-    maxSeen = Math.max(maxSeen, price);
-    if (step === 0 && price >= p.startPrice + STEP_UP) step = 1;
-    else if (step === 1 && price <= maxSeen - STEP_DOWN) step = 2;
-    goal.textContent = steps[step] ?? '';
-  };
-
-  // ---- 下の操作 ----
   const minus = button(t('play.minus'), () => setPrice(price - slider.fineStep), 'btn btn--fine');
   const plus = button(t('play.plus'), () => setPrice(price + slider.fineStep), 'btn btn--fine');
   const priceText = h('output', { className: 'ladder-price' });
@@ -52,14 +32,14 @@ export function ladderScreen(p: AuctionProps): ScreenView {
   const controls = h('div', { className: 'ladder-controls' }, [h('div', { className: 'fine-row' }, [minus, priceText, plus]), decideBtn]);
   const sheet = h('section', { className: 'reveal reveal--flow', attrs: { hidden: '' } });
 
-  const el = h('main', { className: `screen screen--ladder${practice ? ' practice' : ''}` }, [
+  const el = h('main', { className: 'screen screen--ladder' }, [
     h('div', { className: 'auction-head' }, [
       h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }),
       h('span', { className: 'company', text: td(`company.${market.company}`) }),
       timeText,
     ]),
-    practice ? null : h('div', { className: 'time-bar', attrs: { 'aria-hidden': 'true' } }, [timeBar]),
-    goal,
+    h('div', { className: 'time-bar', attrs: { 'aria-hidden': 'true' } }, [timeBar]),
+    h('p', { className: 'goal', text: t('play.goal') }),
     h('div', { className: 'board-head' }, [
       h('span', { className: 'board-head__buy', text: t('play.buyers') }),
       h('span', { className: 'board-head__sell', text: t('play.sellers') }),
@@ -80,7 +60,6 @@ export function ladderScreen(p: AuctionProps): ScreenView {
     if (decided || !started) return;
     price = clampPrice(next, slider);
     paint();
-    advance();
   }
   board.onDrag(setPrice);
   board.el.addEventListener('keydown', (e) => {
@@ -90,7 +69,7 @@ export function ladderScreen(p: AuctionProps): ScreenView {
     e.preventDefault();
   });
 
-  // ---- 10秒（練習の日はなし。行列が動き終わってから数える） ----
+  // ---- 10秒（行列が動き終わってから数える） ----
   const countdown = createCountdown(config.timeLimitSec);
   const limitMs = config.timeLimitSec * 1000;
   let raf = 0;
@@ -107,7 +86,7 @@ export function ladderScreen(p: AuctionProps): ScreenView {
     raf = requestAnimationFrame(tick);
   };
   const onVisibility = () => {
-    if (decided || practice || !started) return;
+    if (decided || !started) return;
     const now = performance.now();
     if (document.hidden) {
       countdown.pause(now);
@@ -150,11 +129,9 @@ export function ladderScreen(p: AuctionProps): ScreenView {
   const begin = () => {
     started = true;
     paint();
-    if (practice) return;
     countdown.start(performance.now());
     raf = requestAnimationFrame(tick);
   };
-  if (!practice) timeText.textContent = t('play.timeLeft', { sec: config.timeLimitSec });
   if (prevDay) void board.slideFrom(prevDay, config.slideMs).then(begin);
   else begin();
 

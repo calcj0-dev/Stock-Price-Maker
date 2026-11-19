@@ -3,6 +3,9 @@
 // 目盛りは5日とも同じ（ニュースで行列が上下に動いて見える）
 
 import { glow, pairs, type Day } from '../core/market';
+
+/** 盤に必要なのは行列だけ（本番の日も、チュートリアルの行列も使える） */
+export type BoardQueue = Pick<Day, 'buyers' | 'sellers'>;
 import { market } from '../data';
 import { t, yen } from '../i18n';
 import { h } from './dom';
@@ -18,15 +21,19 @@ export type Board = {
   /** もう1本の線（答え合わせでは正解、結果画面ではあなたの値段） */
   setMarker(price: number | null): void;
   /** 取引の組を線でつなぎ、あぶれた人を示す（案A）。描いた組の数を返す */
-  showPairs(price: number): number;
+  showPairs(price: number, animate?: boolean): number;
   /** 前の日の位置から今日の位置へ動かす（案C） */
-  slideFrom(prev: Day, ms: number): Promise<void>;
+  slideFrom(prev: BoardQueue, ms: number): Promise<void>;
+  /** 組の線を消す */
+  clearPairs(): void;
+  /** 片側だけ目立たせる（チュートリアル）。null で元に戻す */
+  focus(side: 'buy' | 'sell' | null): void;
   /** 指で動かしたときの値段（範囲内・刻みは呼ぶ側で） */
   onDrag(fn: (price: number) => void): void;
   setEnabled(on: boolean): void;
 };
 
-export function createBoard(day: Day, opts: { className?: string; markerKind?: 'answer' | 'mine' } = {}): Board {
+export function createBoard(day: BoardQueue, opts: { className?: string; markerKind?: 'answer' | 'mine' } = {}): Board {
   const lo = market.slider.min;
   const hi = market.slider.max;
   const pos = (v: number) => ((hi - v) / (hi - lo)) * 100;
@@ -87,7 +94,17 @@ export function createBoard(day: Day, opts: { className?: string; markerKind?: '
       marker.style.top = `${pos(price)}%`;
       markerLabel.textContent = t('play.price', { price: yen(price) });
     },
-    showPairs(price) {
+    clearPairs() {
+      for (const x of [...buys, ...sells]) x.el.classList.remove('alone', 'paired');
+      svg.replaceChildren();
+    },
+    focus(side) {
+      el.classList.toggle('focus-buy', side === 'buy');
+      el.classList.toggle('focus-sell', side === 'sell');
+    },
+    showPairs(price, animate = true) {
+      svg.classList.toggle('pair-lines--static', !animate);
+      board.clearPairs();
       const r = pairs(day, price);
       for (const i of r.aloneBuyers) buys[i]?.el.classList.add('alone');
       for (const i of r.aloneSellers) sells[i]?.el.classList.add('alone');
@@ -105,9 +122,8 @@ export function createBoard(day: Day, opts: { className?: string; markerKind?: '
         const a = center(bf);
         const b = center(sf);
         const path = document.createElementNS(SVG_NS, 'path');
-        // 真ん中でゆるく曲げ、組どうしが見分けやすいようにする
-        const mx = (a.x + b.x) / 2;
-        path.setAttribute('d', `M${a.x},${a.y} C${mx},${a.y} ${mx},${b.y} ${b.x},${b.y}`);
+        // 直線でつなぐ（オーナー 2026-11-19）
+        path.setAttribute('d', `M${a.x},${a.y} L${b.x},${b.y}`);
         path.setAttribute('pathLength', '1');
         path.style.animationDelay = `${k * 90}ms`;
         svg.append(path);

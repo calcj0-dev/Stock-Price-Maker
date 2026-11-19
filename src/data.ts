@@ -6,12 +6,12 @@ import configJson from './data/config.json';
 import jaJson from './data/i18n/ja.json';
 import marketJson from './data/market.json';
 
-export type Market = { company: string; slider: Slider; totalMaxVolume: number; days: Day[] };
+/** チュートリアルの行列（本番より少ない人数。オーナー 2026-11-19：練習の日の代わりにチュートリアル） */
+export type Tutorial = { buyers: number[]; sellers: number[]; answer: number; maxVolume: number; start: number };
+export type Market = { company: string; slider: Slider; totalMaxVolume: number; tutorial: Tutorial; days: Day[] };
 export type GameConfig = {
   timeLimitSec: number;
   warnAtSec: number;
-  /** 時間制限なしの練習の日（1 始まり）。オーナー決定 2026-11-19：1日目だけ練習（案H） */
-  practiceDays: number[];
   /** ニュースで行列が動く様子を見せる長さ（案C）。動き終わってから10秒を数える */
   slideMs: number;
   startTimerOn: string;
@@ -73,7 +73,13 @@ export function validateData(market: Market, config: GameConfig, messages: unkno
   if (mins.length === 0 || Math.min(...mins) !== 0) errors.push('score titles must start at 0');
 
   if (!config.links.portal.startsWith(PORTAL_PREFIX)) errors.push(`links.portal must start with ${PORTAL_PREFIX}`);
-  for (const d of config.practiceDays) if (!market.days.some((x) => x.day === d)) errors.push(`practiceDays: no day ${d}`);
+  // チュートリアル：金額がつまみの刻みにあり、正解が1つに決まる
+  const tu = market.tutorial;
+  for (const v of [...tu.buyers, ...tu.sellers, tu.start]) if (!onGrid(v)) errors.push(`tutorial: price ${v} is off the slider grid`);
+  const tr = findAnswer(tu, slider);
+  if (tr.prices.length !== 1 || tr.prices[0] !== tu.answer || tr.max !== tu.maxVolume) {
+    errors.push(`tutorial: answer ${tu.answer}/${tu.maxVolume} but computed ${tr.prices.join(',')}/${tr.max}`);
+  }
   if (!(config.slideMs >= 0)) errors.push('slideMs out of range');
   if (!(config.timeLimitSec > 0) || !(config.warnAtSec > 0 && config.warnAtSec < config.timeLimitSec)) errors.push('timeLimitSec / warnAtSec out of range');
 

@@ -953,3 +953,64 @@ button {
   font-size: 13px;
   color: var(--text-sub);
 }
+
+/* ---- チュートリアル ---- */
+.tutorial-skip {
+  margin-left: auto;
+}
+.tutorial-skip .link {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.tutorial-msg {
+  min-height: 76px;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff6d6;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+}
+.tutorial-msg__text {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.tutorial-msg__sub {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.tutorial-msg__sub:empty {
+  display: none;
+}
+.board--tutorial {
+  height: clamp(360px, calc(100dvh - 330px), 560px);
+}
+.fine-row.is-off {
+  visibility: hidden;
+}
+.tutorial-dots {
+  margin-top: 4px;
+}
+/* 片側だけ目立たせる */
+.board.focus-buy .rung--sell,
+.board.focus-buy .zone--sell,
+.board.focus-sell .rung--buy,
+.board.focus-sell .zone--buy {
+  opacity: 0.15;
+}
+.board.focus-buy .rung--buy .face,
+.board.focus-sell .rung--sell .face {
+  animation: nudge 0.9s ease-in-out 2;
+}
+@keyframes nudge {
+  50% {
+    transform: scale(1.25);
+  }
+}
+.pair-lines--static path {
+  animation: none;
+  stroke-dashoffset: 0;
+}

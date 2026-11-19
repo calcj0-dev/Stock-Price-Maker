@@ -62,4 +62,9 @@ describe('T-07 データの検査', () => {
     c.links.portal = 'https://example.com/';
     expect(check(market, c).join()).toMatch(/links\.portal/);
   });
+  it("チュートリアルの正解が2つになると止まる", () => {
+    const m = clone(market);
+    m.tutorial.buyers[2] = 1050;
+    expect(check(m).join()).toMatch(/tutorial: answer/);
+  });
 });

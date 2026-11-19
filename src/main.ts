@@ -10,6 +10,7 @@ import { ladderScreen } from './ui/screens/ladder';
 import { newsScreen } from './ui/screens/news';
 import { resultScreen } from './ui/screens/result';
 import { titleScreen } from './ui/screens/title';
+import { tutorialScreen } from './ui/screens/tutorial';
 
 setLocale('ja');
 
@@ -60,4 +61,9 @@ function start(): void {
   render();
 }
 
-show(titleScreen(start));
+/** 「セリを始める」と「遊び方」はチュートリアルから。「もう一回」はチュートリアルなしで1日目へ */
+function startWithTutorial(): void {
+  show(tutorialScreen(start));
+}
+
+show(titleScreen(startWithTutorial, startWithTutorial));
