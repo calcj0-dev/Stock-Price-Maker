@@ -7,6 +7,18 @@
     <meta name="description" content="あなたは株の値付け師。買いたい人と売りたい人が一番たくさん取引できる値段を、5日間決めよう。会社・ニュースはすべて架空です。" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <!-- URL のカード（設計書 6章：決まった画像1枚）。絶対URLはビルド時に VITE_SITE_URL（.env.production）から作る -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="株価を決めるのは誰？" />
+    <meta property="og:title" content="株価を決めるのは誰？" />
+    <meta property="og:description" content="あなたは株の値付け師。買いたい人と売りたい人が一番たくさん取引できる値段を、5日間決めよう。会社・ニュースはすべて架空です。" />
+    <meta property="og:url" content="%VITE_SITE_URL%" />
+    <meta property="og:image" content="%VITE_SITE_URL%og-default.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@shooojp19" />
   </head>
   <body>
     <div id="app"></div>

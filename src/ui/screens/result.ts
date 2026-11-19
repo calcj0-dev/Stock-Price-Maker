@@ -5,7 +5,10 @@ import { score, title, type Day } from '../../core/market';
 import { config, market } from '../../data';
 import { t, td, yen } from '../../i18n';
 import { createBoard } from '../board';
-import { drawChart } from '../chart';
+import { postText } from '../../share/postText';
+import { renderResultImage } from '../../share/resultImage';
+import { canShareImage, openXIntent, saveImage, shareWithImage } from '../../share/share';
+import { chartColors, drawChart } from '../chart';
 import { button, h } from '../dom';
 import { makerApps, notes, privacyLink, type ScreenView } from '../parts';
 
@@ -63,6 +66,27 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
     }),
   );
 
+  // ---- シェア（設計書 5.5）：画像つきで共有できる端末は「画像を付けてシェア」、それ以外は X の投稿画面 ----
+  let image: Blob | null = null;
+  const text = postText(sc, titleId);
+  // 画像ができる前から、画像つきで共有できる端末かを小さな見本で調べて、ボタンの文字を決めておく（文字が途中で変わらないように）
+  const imageShareable = canShareImage(new Blob([], { type: 'image/png' }));
+  const shareBtn = button(t(imageShareable ? 'result.shareImage' : 'result.share'), () => void onShare(), 'btn btn--main btn--share');
+  const saveBtn = button(t('result.saveImage'), () => image && void saveImage(image), 'btn btn--outline');
+  saveBtn.disabled = true;
+  async function onShare() {
+    if (image && canShareImage(image)) {
+      await shareWithImage(text, image);
+      return;
+    }
+    openXIntent(text);
+  }
+  const imageReady = renderResultImage({ prices: game.prices, answers, score: sc, sum, max: market.totalMaxVolume, titleId }).then((b) => {
+    image = b;
+    saveBtn.disabled = !b;
+    return b;
+  });
+
   const el = h('main', { className: 'screen screen--result' }, [
     h('h1', { className: 'result-heading', text: t('result.heading') }),
     h('div', { className: 'card' }, [legend, canvas, h('p', { className: 'chart-note', text: t('result.chartNote') })]),
@@ -74,23 +98,18 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
     ]),
     h('section', { className: 'card' }, [h('h2', { text: t('result.daily') }), daily]),
     h('section', { className: 'card card--learn' }, [h('p', { text: t('result.summary') }), h('p', { text: t('result.realWorld') })]),
-    button(t('result.retry'), onRetry, 'btn btn--main'),
+    h('div', { className: 'share-row' }, [shareBtn, saveBtn]),
+    button(t('result.retry'), onRetry, 'btn btn--outline'),
     makerApps(),
     privacyLink(),
     notes(),
   ]);
 
   // 画面に入ってから幅が決まるので、次のフレームで描く
-  const css = getComputedStyle(document.documentElement);
-  const paint = () =>
-    drawChart(canvas, game.prices, answers, {
-      mine: css.getPropertyValue('--mine').trim(),
-      answer: css.getPropertyValue('--answer').trim(),
-      grid: css.getPropertyValue('--line').trim(),
-      text: css.getPropertyValue('--text-sub').trim(),
-    }, (n) => String(n));
+  const paint = () => drawChart(canvas, game.prices, answers, chartColors(), (n) => String(n));
   requestAnimationFrame(paint);
   window.addEventListener('resize', paint);
 
+  void imageReady;
   return { el, unmount: () => window.removeEventListener('resize', paint) };
 }

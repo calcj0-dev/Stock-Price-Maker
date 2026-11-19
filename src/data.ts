@@ -21,7 +21,7 @@ export type GameConfig = {
   sounds: Record<string, unknown>;
   hashtag: string;
   storageKey: string;
-  links: { portal: string; tameru: string; follow: string; vercelPrivacy: string };
+  links: { portal: string; tameru: string; follow: string; vercelPrivacy: string; xIntent: string };
 };
 export type Messages = typeof jaJson;
 
@@ -97,6 +97,13 @@ export function validateData(market: Market, config: GameConfig, messages: unkno
   if (!(config.timeLimitSec > 0) || !(config.warnAtSec > 0 && config.warnAtSec < config.timeLimitSec)) errors.push('timeLimitSec / warnAtSec out of range');
 
   return errors;
+}
+
+/** 作品のURL（環境変数 VITE_SITE_URL。設計書 5.1）。未設定なら今のページのURL */
+export function siteUrl(): string {
+  const v = (import.meta.env.VITE_SITE_URL as string | undefined)?.trim();
+  if (v) return v;
+  return typeof location === 'undefined' ? '' : location.origin + location.pathname;
 }
 
 export const market = marketJson as Market;

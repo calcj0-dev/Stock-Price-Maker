@@ -925,3 +925,7 @@ button {
   font-size: 12px;
   color: var(--text-sub);
 }
+.share-row {
+  display: grid;
+  gap: 8px;
+}

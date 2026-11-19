@@ -107,6 +107,7 @@
     "text": "株の値付け師になって{score}点。称号：{title} #{hashtag}"
   },
   "image": {
+    "titleLabel": "称号：{title}",
     "footer": "本物の取引所の仕組みは簡略化しています。会社とニュースは架空です"
   },
   "links": {
