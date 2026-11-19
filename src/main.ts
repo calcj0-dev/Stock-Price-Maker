@@ -6,7 +6,6 @@ import { market } from './data';
 import { setLocale } from './i18n';
 import type { ScreenView } from './ui/parts';
 import { auctionScreen } from './ui/screens/auction';
-import { ladderScreen } from './ui/screens/ladder';
 import { newsScreen } from './ui/screens/news';
 import { resultScreen } from './ui/screens/result';
 import { titleScreen } from './ui/screens/title';
@@ -38,9 +37,7 @@ function render(): void {
     }));
     return;
   }
-  // 試作の見比べ：?ui=list で前の形（左右の列）、それ以外は案1（値段のはしご）
-  const screen = new URLSearchParams(location.search).get('ui') === 'list' ? auctionScreen : ladderScreen;
-  show(screen({
+  show(auctionScreen({
     day,
     prevAnswer: market.days[game.day - 1]?.answer,
     startPrice: startPrice(game, market.slider),
