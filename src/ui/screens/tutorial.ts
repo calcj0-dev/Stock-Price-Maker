@@ -2,13 +2,14 @@
 // 本番と同じ盤で、左右5人の行列を使って手順を案内する。時間制限なし
 // 仕組みを覚えるため、チュートリアルの中だけは動かしている間も組の線と組の数を見せる（本番は決定 #2 のとおり隠す）
 
+import { cue } from '../../audio';
 import { clampPrice } from '../../core/game';
 import { volume } from '../../core/market';
 import { config, market } from '../../data';
 import { t, yen, type MessageKey } from '../../i18n';
 import { createBoard } from '../board';
 import { button, h, linkButton } from '../dom';
-import { type ScreenView } from '../parts';
+import { soundButton, type ScreenView } from '../parts';
 
 type Step = { text: MessageKey; kind: 'next' | 'drag' | 'decide' | 'end'; focus?: 'buy' | 'sell' };
 const STEPS: Step[] = [
@@ -44,6 +45,7 @@ export function tutorialScreen(onDone: () => void): ScreenView {
     h('div', { className: 'auction-head' }, [
       h('span', { className: 'day-chip', text: t('tutorial.heading') }),
       h('span', { className: 'tutorial-skip' }, [linkButton(t('tutorial.skip'), onDone)]),
+      soundButton(),
     ]),
     h('div', { className: 'tutorial-msg' }, [message, sub]),
     h('div', { className: 'board-head' }, [
@@ -98,7 +100,10 @@ export function tutorialScreen(onDone: () => void): ScreenView {
 
   function setPrice(next: number) {
     if (!canDrag()) return;
+    const before = volume(tutorial, price);
     price = clampPrice(next, slider);
+    const after = volume(tutorial, price);
+    if (before.buyers !== after.buyers || before.sellers !== after.sellers) cue('glow');
     minSeen = Math.min(minSeen, price);
     maxSeen = Math.max(maxSeen, price);
     // 前の手順の「もう一度」の文は、動かしたら元の案内に戻す
@@ -111,10 +116,13 @@ export function tutorialScreen(onDone: () => void): ScreenView {
     const s = cur();
     if (s.kind === 'end') return onDone();
     if (s.kind === 'decide' && !solved) {
+      cue('decide');
       if (price === tutorial.answer) {
+        cue('exact', 0.45);
         solved = true;
         render();
       } else {
+        cue('miss', 0.45);
         message.textContent = t('tutorial.retry');
       }
       return;

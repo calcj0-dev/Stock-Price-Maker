@@ -1,6 +1,8 @@
 // 入口：5日の進み方（core/game.ts）に合わせて画面を切り替える。ページの読み込みは起こさない
 
 import './style.css';
+import { initAnalytics } from './analytics';
+import { unlockAudio } from './audio';
 import { beginAuction, createGame, decide, nextDay, startPrice, type Game } from './core/game';
 import { market } from './data';
 import { setLocale } from './i18n';
@@ -12,6 +14,10 @@ import { titleScreen } from './ui/screens/title';
 import { tutorialScreen } from './ui/screens/tutorial';
 
 setLocale('ja');
+initAnalytics();
+// iOS などでは、利用者が触ったときに音を鳴らせるようにする（決定 #9：最初から鳴る）
+document.addEventListener('pointerdown', unlockAudio, { capture: true });
+document.addEventListener('keydown', unlockAudio, { capture: true });
 
 const root = document.querySelector<HTMLElement>('#app');
 let current: ScreenView | null = null;

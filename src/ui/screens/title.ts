@@ -2,7 +2,7 @@
 
 import { t } from '../../i18n';
 import { button, h } from '../dom';
-import { notes, person, portalLink, privacyLink, versionLabel, type ScreenView } from '../parts';
+import { notes, person, portalLink, privacyLink, soundButton, versionLabel, type ScreenView } from '../parts';
 
 export function titleScreen(onStart: () => void, onTutorial: () => void): ScreenView {
   const hero = h('div', { className: 'title-hero', attrs: { 'aria-hidden': 'true' } }, [
@@ -12,7 +12,7 @@ export function titleScreen(onStart: () => void, onTutorial: () => void): Screen
   ]);
 
   const el = h('main', { className: 'screen screen--title' }, [
-    h('div', { className: 'top-bar' }, [versionLabel()]),
+    h('div', { className: 'top-bar' }, [versionLabel(), soundButton()]),
     h('div', { className: 'title-body' }, [
       hero,
       h('h1', { className: 'title-name', text: t('app.name') }),

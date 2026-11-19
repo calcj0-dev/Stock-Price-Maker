@@ -929,3 +929,36 @@ button {
   display: grid;
   gap: 8px;
 }
+
+/* ---- 音のボタン（右上） ---- */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: 4px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.icon-btn[aria-pressed="false"] {
+  color: var(--text-sub);
+}
+.top-bar .version {
+  margin-right: 4px;
+}
+.spacer {
+  flex: 1;
+}
+.result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+.result-head .result-heading {
+  padding-top: 0;
+}

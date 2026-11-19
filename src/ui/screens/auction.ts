@@ -2,6 +2,7 @@
 // 案C：前の日の位置から行列が動いてから始まる（10秒は動き終わってから数える）
 // 成立件数は「決める」まで出さない（決定 #2）。決めたら取引の組を線でつなぐ（案A）
 
+import { cue } from '../../audio';
 import { createCountdown } from '../../core/countdown';
 import { clampPrice } from '../../core/game';
 import { volume, type Day, type Judge } from '../../core/market';
@@ -9,7 +10,7 @@ import { config, market } from '../../data';
 import { t, td, yen } from '../../i18n';
 import { createBoard } from '../board';
 import { button, h } from '../dom';
-import { type ScreenView } from '../parts';
+import { soundButton, type ScreenView } from '../parts';
 
 export type Decision = { price: number; timeout: boolean };
 export type AuctionProps = {
@@ -47,6 +48,7 @@ export function auctionScreen(p: AuctionProps): ScreenView {
       h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }),
       h('span', { className: 'company', text: td(`company.${market.company}`) }),
       timeText,
+      soundButton(),
     ]),
     h('div', { className: 'time-bar', attrs: { 'aria-hidden': 'true' } }, [timeBar]),
     h('p', { className: 'goal', text: t('play.goal') }),
@@ -59,8 +61,14 @@ export function auctionScreen(p: AuctionProps): ScreenView {
     sheet,
   ]);
 
+  // 光る人が変わったときだけ「ポッ」
+  let glowKey = '';
   const paint = () => {
     board.setPrice(price);
+    const g = volume(day, price);
+    const key = `${g.buyers}-${g.sellers}`;
+    if (glowKey && key !== glowKey && !decided) cue('glow');
+    glowKey = key;
     priceText.textContent = t('play.price', { price: yen(price) });
     minus.disabled = decided || !started || price <= slider.min;
     plus.disabled = decided || !started || price >= slider.max;
@@ -83,12 +91,19 @@ export function auctionScreen(p: AuctionProps): ScreenView {
   const countdown = createCountdown(config.timeLimitSec);
   const limitMs = config.timeLimitSec * 1000;
   let raf = 0;
+  let lastTick = 0;
   const tick = () => {
     const now = performance.now();
     const left = countdown.remainingMs(now);
     timeText.textContent = t('play.timeLeft', { sec: Math.ceil(left / 1000) });
     timeBar.style.transform = `scaleX(${left / limitMs})`;
     el.classList.toggle('warn', left <= config.warnAtSec * 1000);
+    // 残り3秒から1秒ごとに「チッ」
+    const sec = Math.ceil(left / 1000);
+    if (sec <= config.warnAtSec && sec > 0 && sec !== lastTick) {
+      lastTick = sec;
+      cue('tick');
+    }
     if (countdown.expired(now)) {
       doDecide(true);
       return;
@@ -121,6 +136,8 @@ export function auctionScreen(p: AuctionProps): ScreenView {
     board.showPairs(price);
 
     const { judge } = p.onDecide({ price, timeout });
+    cue('decide');
+    cue(judge === 'exact' ? 'exact' : 'miss', 0.45);
     sheet.replaceChildren(
       ...[
         timeout ? h('p', { className: 'reveal__timeup', text: t('play.timeUp') }) : null,

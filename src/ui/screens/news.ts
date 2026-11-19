@@ -4,11 +4,12 @@ import type { Day } from '../../core/market';
 import { market } from '../../data';
 import { t, td } from '../../i18n';
 import { button, h } from '../dom';
-import { type ScreenView } from '../parts';
+import { cue } from '../../audio';
+import { soundButton, type ScreenView } from '../parts';
 
 export function newsScreen(day: Day, onBegin: () => void): ScreenView {
   const el = h('main', { className: 'screen screen--news' }, [
-    h('div', { className: 'top-bar top-bar--left' }, [h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) })]),
+    h('div', { className: 'top-bar top-bar--left' }, [h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }), h('span', { className: 'spacer' }), soundButton()]),
     h('article', { className: 'news-card' }, [
       h('p', { className: 'news-card__label', text: t('news.dayLabel', { n: day.day }) }),
       h('p', { className: 'news-card__company', text: td(`company.${market.company}`) }),
@@ -19,5 +20,6 @@ export function newsScreen(day: Day, onBegin: () => void): ScreenView {
       market.days.map((d) => h('span', { className: d.day < day.day ? 'done' : d.day === day.day ? 'now' : '' }))),
     button(t('news.startDay'), onBegin, 'btn btn--main'),
   ]);
+  cue('news');
   return { el };
 }

@@ -1,5 +1,6 @@
 // S5 結果（設計書 1.7・2章・F-05）。プロトタイプではシェア・効果音・つくった人のアプリの枠はまだ入れない
 
+import { cueResult } from '../../audio';
 import type { Game } from '../../core/game';
 import { score, title, type Day } from '../../core/market';
 import { config, market } from '../../data';
@@ -10,7 +11,7 @@ import { renderResultImage } from '../../share/resultImage';
 import { canShareImage, openXIntent, saveImage, shareWithImage } from '../../share/share';
 import { chartColors, drawChart } from '../chart';
 import { button, h } from '../dom';
-import { makerApps, notes, privacyLink, type ScreenView } from '../parts';
+import { makerApps, notes, privacyLink, soundButton, type ScreenView } from '../parts';
 
 /**
  * 案B：その日の正解を盤で見る。正解の値段で光る人と取引の組を見せ、あなたの値段は点線で重ねる
@@ -88,7 +89,7 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
   });
 
   const el = h('main', { className: 'screen screen--result' }, [
-    h('h1', { className: 'result-heading', text: t('result.heading') }),
+    h('div', { className: 'result-head' }, [h('h1', { className: 'result-heading', text: t('result.heading') }), soundButton()]),
     h('div', { className: 'card' }, [legend, canvas, h('p', { className: 'chart-note', text: t('result.chartNote') })]),
     h('div', { className: 'score-block' }, [
       h('p', { className: 'score', text: t('result.score', { score: sc }) }),
@@ -111,5 +112,6 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
   window.addEventListener('resize', paint);
 
   void imageReady;
+  cueResult(titleId, 0.2);
   return { el, unmount: () => window.removeEventListener('resize', paint) };
 }

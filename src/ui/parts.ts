@@ -2,6 +2,7 @@
 
 import { config } from '../data';
 import { t } from '../i18n';
+import { onSettingsChange, settings } from '../settings';
 import { APP_VERSION } from '../version';
 import { externalLink, h } from './dom';
 
@@ -74,4 +75,25 @@ export function makerApps(): HTMLElement {
     h('div', { className: 'maker-apps__item' }, [go(t('common.portalLink'), config.links.portal, 'btn btn--outline btn--link')]),
     h('p', { className: 'maker-apps__follow' }, [externalLink(t('links.follow'), config.links.follow)]),
   ]);
+}
+
+const SPEAKER_ON =
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+const SPEAKER_OFF =
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+/** 右上の音のボタン（決定 #9）。設定が変わると見た目も変わる。画面を離れると購読を外す */
+export function soundButton(): HTMLButtonElement {
+  const el = h('button', { className: 'icon-btn', attrs: { type: 'button' } });
+  const paint = () => {
+    el.innerHTML = settings.sound ? SPEAKER_ON : SPEAKER_OFF;
+    el.setAttribute('aria-label', t(settings.sound ? 'common.soundOn' : 'common.soundOff'));
+    el.setAttribute('aria-pressed', String(settings.sound));
+  };
+  el.addEventListener('click', () => {
+    settings.sound = !settings.sound;
+  });
+  paint();
+  const off = onSettingsChange(() => (el.isConnected ? paint() : off()));
+  return el;
 }

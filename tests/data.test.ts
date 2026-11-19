@@ -76,3 +76,14 @@ describe('T-07 データの検査', () => {
     expect(check(m).join()).toMatch(/tutorial: answer/);
   });
 });
+
+describe('効果音の割り当て', () => {
+  it('config.json の sounds の名前がすべて音として作ってある', async () => {
+    const { soundNames } = await import('../src/audio');
+    const names = new Set(soundNames());
+    const s = config.sounds as Record<string, unknown>;
+    const used = Object.entries(s).flatMap(([k, v]) => (k === 'result' ? Object.values(v as Record<string, string>) : [v as string]));
+    for (const n of used) expect(names.has(n), n).toBe(true);
+    for (const tt of config.titles) expect((s.result as Record<string, string>)[tt.id], tt.id).toBeTruthy();
+  });
+});
