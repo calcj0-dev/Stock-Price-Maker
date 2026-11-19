@@ -59,7 +59,8 @@
     "plus": "＋10円",
     "decide": "この値段で決める",
     "timeLeft": "残り {sec}秒",
-    "timeUp": "時間切れ"
+    "timeUp": "時間切れ",
+    "goal": "左右の光る人の数をそろえよう"
   },
   "reveal": {
     "volume": "成立 {n}件（この日の最大 {max}件）",

@@ -10,7 +10,7 @@ import { button, h } from '../dom';
 import { person, type ScreenView } from '../parts';
 
 export type Decision = { price: number; timeout: boolean };
-type Props = {
+export type AuctionProps = {
   day: Day;
   /** 前の日の正解（仕組みの一言の {prev}）。1日目は undefined */
   prevAnswer: number | undefined;
@@ -20,7 +20,7 @@ type Props = {
   onNext: () => void;
 };
 
-export function auctionScreen(p: Props): ScreenView {
+export function auctionScreen(p: AuctionProps): ScreenView {
   const { slider } = market;
   const { day } = p;
   let price = clampPrice(p.startPrice, slider);
