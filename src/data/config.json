@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "timeLimitSec": 10,
+  "warnAtSec": 3,
+  "startTimerOn": "newsDismissed",
+  "onTimeout": "decideCurrent",
+  "reveal": {
+    "showGlowWhileDragging": true,
+    "showVolumeWhileDragging": false
+  },
+  "score": {
+    "formula": "round(sum(volume) / totalMaxVolume * 100)"
+  },
+  "titles": [
+    {
+      "id": "t_still",
+      "priority": 1,
+      "rule": "samePriceAllDays"
+    },
+    {
+      "id": "t_empty",
+      "priority": 2,
+      "rule": "zeroVolumeDay"
+    },
+    {
+      "id": "t_legend",
+      "rule": "score",
+      "min": 100
+    },
+    {
+      "id": "t_pro",
+      "rule": "score",
+      "min": 95
+    },
+    {
+      "id": "t_novice",
+      "rule": "score",
+      "min": 85
+    },
+    {
+      "id": "t_lost",
+      "rule": "score",
+      "min": 50
+    },
+    {
+      "id": "t_chaos",
+      "rule": "score",
+      "min": 0
+    }
+  ],
+  "sounds": {
+    "news": "chararan",
+    "glow": "pop",
+    "tick": "ticktock",
+    "decide": "kaan",
+    "exact": "pinpon",
+    "miss": "powan",
+    "result": {
+      "t_legend": "fanfare",
+      "t_pro": "fanfare",
+      "t_novice": "pinpon",
+      "t_lost": "powan",
+      "t_chaos": "powan",
+      "t_still": "powan",
+      "t_empty": "powan"
+    }
+  },
+  "hashtag": "株価を決めるのは誰",
+  "storageKey": "baka094.v1",
+  "links": {
+    "portal": "https://app-lab-rust.vercel.app/?utm_source=bakage&utm_medium=game&utm_campaign=baka094",
+    "tameru": "https://tameru-lovat.vercel.app/?utm_source=bakage&utm_medium=game&utm_campaign=baka094",
+    "tva": "https://trader-vs-autopilot.vercel.app/?utm_source=bakage&utm_medium=game&utm_campaign=baka094",
+    "follow": "https://x.com/shooojp19"
+  }
+}
