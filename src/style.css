@@ -580,7 +580,7 @@ button {
 
 /* ---- S3 セリ（試作 案1：値段のはしご） ---- */
 .screen--ladder {
-  --axis: 64px;
+
   padding-bottom: 12px;
 }
 .goal {
@@ -603,6 +603,7 @@ button {
   color: var(--sell);
 }
 .board {
+  --axis: 64px;
   position: relative;
   height: clamp(420px, calc(100dvh - 300px), 640px);
   margin-top: 4px;
@@ -748,4 +749,207 @@ button {
 .reveal--flow {
   position: static;
   margin: 12px calc(-1 * var(--gutter)) -12px;
+}
+
+/* ---- 改善の試作（案A・B・C・E・G・H） ---- */
+/* 案E：顔。光った人は笑顔、光っていない人は困り顔、あぶれた人は真顔 */
+.face {
+  position: relative;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--off);
+  transition: background 0.08s, transform 0.08s;
+}
+.face::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #8a857c;
+  box-shadow: 7px 0 0 #8a857c;
+}
+.face__mouth {
+  position: absolute;
+  left: 6px;
+  top: 12px;
+  width: 8px;
+  height: 4px;
+  border-top: 1.5px solid #8a857c;
+  border-radius: 8px 8px 0 0;
+}
+.on .face {
+  transform: scale(1.1);
+}
+.on .face::before {
+  background: #fff;
+  box-shadow: 7px 0 0 #fff;
+}
+.on .face__mouth {
+  top: 10px;
+  border-top: none;
+  border-bottom: 1.5px solid #fff;
+  border-radius: 0 0 8px 8px;
+}
+.on .face--buy {
+  background: var(--buy);
+}
+.on .face--sell {
+  background: var(--sell);
+}
+.alone .face__mouth {
+  top: 13px;
+  height: 0;
+  border-radius: 0;
+  border-bottom: none;
+  border-top: 1.5px solid #fff;
+}
+.rung.alone {
+  opacity: 0.55;
+}
+.rung.alone .rung__price {
+  text-decoration: line-through;
+}
+
+/* 案A：取引の組を線でつなぐ */
+.pair-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.pair-lines path {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-opacity: 0.55;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 0.35s ease-out forwards;
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.rung {
+  z-index: 2;
+}
+
+/* 案C：ニュースで行列が動く */
+.board.sliding .rung {
+  transition: top var(--slide-ms, 800ms) cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+/* もう1本の線（答え合わせ＝正解、結果画面＝あなたの値段） */
+.marker-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.marker-line[hidden] {
+  display: none;
+}
+.marker-line span {
+  position: absolute;
+  right: 4px;
+  transform: translateY(-50%);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: 12px;
+  font-weight: 800;
+}
+.marker-line--answer {
+  border-top: 2px dashed var(--answer);
+}
+.marker-line--answer span {
+  border: 2px solid var(--answer);
+  color: var(--answer);
+}
+.marker-line--mine {
+  border-top: 2px dashed var(--mine);
+}
+.marker-line--mine span {
+  border: 2px solid var(--mine);
+  color: var(--mine);
+}
+.price-line {
+  z-index: 4;
+}
+.board--answer .price-line {
+  border-top-color: var(--answer);
+}
+.board--answer .price-line__label {
+  background: var(--answer);
+}
+.board:not(.board--drag) {
+  cursor: default;
+}
+
+/* 案G・H：セリ人の仕事、練習の案内 */
+.role-intro {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--buy-soft);
+  font-size: 14px;
+  font-weight: 700;
+}
+.goal--practice {
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #fff6d6;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.practice .time-left {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+/* 案B：結果画面で正解を見る */
+.btn--small {
+  width: auto;
+  justify-self: start;
+  min-height: 36px;
+  padding: 0 14px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+.modal--board {
+  width: min(440px, calc(100vw - 16px));
+  padding: 16px;
+}
+.modal--board h2 {
+  margin-bottom: 4px;
+}
+.board--small {
+  height: min(56vh, 460px);
+}
+.modal-board__answer {
+  font-weight: 800;
+  color: var(--answer);
+}
+.modal-board__mine {
+  font-size: 13px;
+  color: var(--mine);
+  font-weight: 700;
+  display: flex;
+  gap: 8px;
+}
+.modal-board__reason {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-sub);
 }

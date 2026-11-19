@@ -2,6 +2,10 @@
   "version": 1,
   "timeLimitSec": 10,
   "warnAtSec": 3,
+  "practiceDays": [
+    1
+  ],
+  "slideMs": 800,
   "startTimerOn": "newsDismissed",
   "onTimeout": "decideCurrent",
   "reveal": {

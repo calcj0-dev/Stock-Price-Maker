@@ -10,6 +10,10 @@ export type Market = { company: string; slider: Slider; totalMaxVolume: number; 
 export type GameConfig = {
   timeLimitSec: number;
   warnAtSec: number;
+  /** 時間制限なしの練習の日（1 始まり）。オーナー決定 2026-11-19：1日目だけ練習（案H） */
+  practiceDays: number[];
+  /** ニュースで行列が動く様子を見せる長さ（案C）。動き終わってから10秒を数える */
+  slideMs: number;
   startTimerOn: string;
   onTimeout: string;
   reveal: { showGlowWhileDragging: boolean; showVolumeWhileDragging: boolean };
@@ -69,6 +73,8 @@ export function validateData(market: Market, config: GameConfig, messages: unkno
   if (mins.length === 0 || Math.min(...mins) !== 0) errors.push('score titles must start at 0');
 
   if (!config.links.portal.startsWith(PORTAL_PREFIX)) errors.push(`links.portal must start with ${PORTAL_PREFIX}`);
+  for (const d of config.practiceDays) if (!market.days.some((x) => x.day === d)) errors.push(`practiceDays: no day ${d}`);
+  if (!(config.slideMs >= 0)) errors.push('slideMs out of range');
   if (!(config.timeLimitSec > 0) || !(config.warnAtSec > 0 && config.warnAtSec < config.timeLimitSec)) errors.push('timeLimitSec / warnAtSec out of range');
 
   return errors;

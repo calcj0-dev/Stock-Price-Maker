@@ -1,7 +1,7 @@
 // T-01〜T-04：計算が参照実装 sim/market.mjs と同じ結果になる
 import { describe, expect, it } from 'vitest';
 import * as ref from '../sim/market.mjs';
-import { findAnswer, glow, judge, score, title, volume } from '../src/core/market';
+import { findAnswer, glow, judge, pairs, score, title, volume } from '../src/core/market';
 import { config, market } from '../src/data';
 import jaJson from '../src/data/i18n/ja.json';
 
@@ -88,5 +88,30 @@ describe('T-04 特別な称号が点数より先', () => {
     expect(title(p, v, 94, config.titles)).toBe('t_novice');
     expect(title(p, v, 84, config.titles)).toBe('t_lost');
     expect(title(p, v, 49, config.titles)).toBe('t_chaos');
+  });
+});
+
+describe('取引の組（案A）', () => {
+  it('すべての値段で、組の数＝成立件数、あぶれた人＝光った人の多い方の余り', () => {
+    for (const d of days) {
+      for (let p = market.slider.min; p <= market.slider.max; p += market.slider.step) {
+        const r = pairs(d, p);
+        const v = volume(d, p);
+        expect(r.pairs.length).toBe(v.volume);
+        expect(r.aloneBuyers.length).toBe(v.buyers - v.volume);
+        expect(r.aloneSellers.length).toBe(v.sellers - v.volume);
+        for (const [b, s] of r.pairs) {
+          expect(p).toBeLessThanOrEqual(d.buyers[b]!);
+          expect(p).toBeGreaterThanOrEqual(d.sellers[s]!);
+        }
+      }
+    }
+  });
+  it('線に近い人から組む', () => {
+    const d = days[0]!;
+    const r = pairs(d, 1000);
+    // 1,000円で光る買いたい人のうち一番安い 1,000円の人と、売りたい人のうち一番高い 1,000円の人が最初の組
+    expect(d.buyers[r.pairs[0]![0]]).toBe(1000);
+    expect(d.sellers[r.pairs[0]![1]]).toBe(1000);
   });
 });

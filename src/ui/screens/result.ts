@@ -1,12 +1,41 @@
 // S5 結果（設計書 1.7・2章・F-05）。プロトタイプではシェア・効果音・つくった人のアプリの枠はまだ入れない
 
 import type { Game } from '../../core/game';
-import { score, title } from '../../core/market';
+import { score, title, type Day } from '../../core/market';
 import { config, market } from '../../data';
-import { t, td } from '../../i18n';
+import { t, td, yen } from '../../i18n';
+import { createBoard } from '../board';
 import { drawChart } from '../chart';
 import { button, h } from '../dom';
 import { notes, portalLink, type ScreenView } from '../parts';
+
+/**
+ * 案B：その日の正解を盤で見る。正解の値段で光る人と取引の組を見せ、あなたの値段は点線で重ねる
+ */
+function openDayBoard(day: Day, mine: number, reason: string): void {
+  const board = createBoard(day, { className: 'board--small board--answer', markerKind: 'mine' });
+  board.setPrice(day.answer);
+  board.setMarker(mine === day.answer ? null : mine);
+  const dialog = h('dialog', { className: 'modal modal--board' }, [
+    h('h2', { text: t('play.day', { n: day.day }) }),
+    h('p', { className: 'modal-board__answer', text: t('reveal.answer', { price: yen(day.answer) }) }),
+    h('p', { className: 'modal-board__mine' }, [
+      h('span', { className: 'modal-board__key', text: t('result.chartMine') }),
+      h('span', { text: t('play.price', { price: yen(mine) }) }),
+    ]),
+    h('div', { className: 'board-head' }, [
+      h('span', { className: 'board-head__buy', text: t('play.buyers') }),
+      h('span', { className: 'board-head__sell', text: t('play.sellers') }),
+    ]),
+    board.el,
+    h('p', { className: 'modal-board__reason', text: reason }),
+    button(t('common.close'), () => dialog.close(), 'btn btn--sub'),
+  ]);
+  dialog.addEventListener('close', () => dialog.remove());
+  document.body.append(dialog);
+  dialog.showModal();
+  requestAnimationFrame(() => board.showPairs(day.answer));
+}
 
 export function resultScreen(game: Game, onRetry: () => void): ScreenView {
   const sc = score(game.volumes, market.totalMaxVolume);
@@ -25,9 +54,11 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
     market.days.map((d, i) => {
       const j = game.judges[i] ?? 'exact';
       const prev = market.days[i - 1]?.answer ?? d.answer;
+      const reason = td(`reasons.${d.news}`, { prev: yen(prev), answer: yen(d.answer) });
       return h('li', {}, [
         h('span', { className: `daily__judge daily__judge--${j}`, text: t('result.dayLine', { n: d.day, text: t(`reveal.${j}`) }) }),
-        h('span', { className: 'daily__reason', text: td(`reasons.${d.news}`, { prev: prev.toLocaleString('ja-JP'), answer: d.answer.toLocaleString('ja-JP') }) }),
+        h('span', { className: 'daily__reason', text: reason }),
+        button(t('result.viewBoard'), () => openDayBoard(d, game.prices[i] ?? d.answer, reason), 'btn btn--small'),
       ]);
     }),
   );

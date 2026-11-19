@@ -9,6 +9,8 @@ import { type ScreenView } from '../parts';
 export function newsScreen(day: Day, onBegin: () => void): ScreenView {
   const el = h('main', { className: 'screen screen--news' }, [
     h('div', { className: 'top-bar top-bar--left' }, [h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) })]),
+    // 案G：セリ人の仕事を最初に伝える（1日目だけ）
+    day.day === 1 ? h('p', { className: 'role-intro', text: t('intro.role') }) : null,
     h('article', { className: 'news-card' }, [
       h('p', { className: 'news-card__label', text: t('news.dayLabel', { n: day.day }) }),
       h('p', { className: 'news-card__company', text: td(`company.${market.company}`) }),

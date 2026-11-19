@@ -32,6 +32,14 @@ export function person(side: 'buy' | 'sell'): HTMLElement {
   ]);
 }
 
+/**
+ * 顔（案E）。文字を増やさずに気持ちを見せる：光った人は笑顔（買う！／売る！）、
+ * 光っていない人は困り顔（高いなあ／安いなあ）、組めなかった人（あぶれ）は真顔。表情は CSS で切り替える
+ */
+export function face(side: 'buy' | 'sell'): HTMLElement {
+  return h('span', { className: `face face--${side}`, attrs: { 'aria-hidden': 'true' } }, [h('span', { className: 'face__mouth' })]);
+}
+
 /** 中央に出す小さな重ね表示（遊び方など） */
 export function openDialog(heading: string, body: string): void {
   const dialog = h('dialog', { className: 'modal' }, [

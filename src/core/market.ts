@@ -29,6 +29,24 @@ export function volume(day: Pick<Day, 'buyers' | 'sellers'>, price: number): { v
   return { volume: Math.min(b, s), buyers: b, sellers: s };
 }
 
+/**
+ * 取引の組（案A）。光った買いたい人と売りたい人を、線（値段）に近い人から1組ずつ組ませる。
+ * 組の数は成立件数と同じ。組めなかった光った人が「あぶれた人」
+ */
+export function pairs(
+  day: Pick<Day, 'buyers' | 'sellers'>,
+  price: number,
+): { pairs: [buyer: number, seller: number][]; aloneBuyers: number[]; aloneSellers: number[] } {
+  const b = day.buyers.map((v, i) => ({ v, i })).filter((x) => price <= x.v).sort((x, y) => x.v - y.v);
+  const s = day.sellers.map((v, i) => ({ v, i })).filter((x) => price >= x.v).sort((x, y) => y.v - x.v);
+  const n = Math.min(b.length, s.length);
+  return {
+    pairs: b.slice(0, n).map((x, k) => [x.i, s[k]!.i]),
+    aloneBuyers: b.slice(n).map((x) => x.i),
+    aloneSellers: s.slice(n).map((x) => x.i),
+  };
+}
+
 /** 値段の評価：ぴったり／高すぎ（買いたい人が足りない）／安すぎ（売りたい人が足りない） */
 export function judge(day: Pick<Day, 'answer'>, price: number): Judge {
   if (price === day.answer) return 'exact';

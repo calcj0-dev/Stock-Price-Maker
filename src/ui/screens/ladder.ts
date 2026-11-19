@@ -1,65 +1,48 @@
-// S3 セリ（試作 案1：値段のはしご）。真ん中に縦の値段の目盛り、人は自分の希望額の高さに置く
-// 「今の値段」の横線を指で上下に動かす。線より上の買いたい人・線より下の売りたい人が光る
-// 成立件数は「決める」まで出さない（決定 #2）。目盛りは5日とも同じ（ニュースで行列が上下に動いて見える）
+// S3 セリ（試作 案1：値段のはしご）と S4 答え合わせ
+// 案C：前の日の位置から行列が動いてから始まる。案H：練習の日は時間制限なしで手順を案内する
+// 成立件数は「決める」まで出さない（決定 #2）。決めたら取引の組を線でつなぐ（案A）
 
 import { createCountdown } from '../../core/countdown';
 import { clampPrice } from '../../core/game';
-import { glow, volume } from '../../core/market';
+import { volume } from '../../core/market';
 import { config, market } from '../../data';
 import { t, td, yen } from '../../i18n';
+import { createBoard } from '../board';
 import { button, h } from '../dom';
-import { person, type ScreenView } from '../parts';
+import { type ScreenView } from '../parts';
 import type { AuctionProps } from './auction';
 
-const TICK = 100;
+/** 練習の案内：上へ動かした → 下へ動かした → 決める */
+const STEP_UP = 150;
+const STEP_DOWN = 100;
 
 export function ladderScreen(p: AuctionProps): ScreenView {
   const { slider } = market;
   const { day } = p;
-  const lo = slider.min;
-  const hi = slider.max;
-  /** 値段 → 上からの位置（%） */
-  const pos = (v: number) => ((hi - v) / (hi - lo)) * 100;
+  const practice = config.practiceDays.includes(day.day);
+  const prevDay = market.days[day.day - 2];
   let price = clampPrice(p.startPrice, slider);
   let decided = false;
+  let started = false;
 
-  // ---- 人（希望額の高さに置く） ----
-  const chip = (side: 'buy' | 'sell', v: number) =>
-    h('div', { className: `rung rung--${side}`, attrs: { style: `top:${pos(v)}%` } }, [
-      side === 'buy' ? h('span', { className: 'rung__price', text: yen(v) }) : person(side),
-      side === 'buy' ? person(side) : h('span', { className: 'rung__price', text: yen(v) }),
-    ]);
-  const buyChips = day.buyers.map((v) => chip('buy', v));
-  const sellChips = day.sellers.map((v) => chip('sell', v));
+  const board = createBoard(day, { markerKind: 'answer' });
 
-  // ---- 目盛り ----
-  const ticks: HTMLElement[] = [];
-  for (let v = Math.ceil((lo + 1) / TICK) * TICK; v < hi; v += TICK) {
-    ticks.push(h('div', { className: 'tick', attrs: { style: `top:${pos(v)}%` } }, [h('span', { text: yen(v) })]));
-  }
-
-  // ---- 今の値段の線（指で動かす）と、光る側の色の帯 ----
-  const lineLabel = h('span', { className: 'price-line__label' });
-  const line = h('div', { className: 'price-line' }, [lineLabel]);
-  const buyZone = h('div', { className: 'zone zone--buy' });
-  const sellZone = h('div', { className: 'zone zone--sell' });
-  const answerLine = h('div', { className: 'answer-line', attrs: { hidden: '', style: `top:${pos(day.answer)}%` } }, [
-    h('span', { text: t('play.price', { price: yen(day.answer) }) }),
-  ]);
-
-  const board = h('div', { className: 'board', attrs: { role: 'slider', tabindex: '0', 'aria-valuemin': String(lo), 'aria-valuemax': String(hi) } }, [
-    buyZone,
-    sellZone,
-    ...ticks,
-    ...buyChips,
-    ...sellChips,
-    answerLine,
-    line,
-  ]);
-
-  // ---- 上の帯 ----
-  const timeText = h('span', { className: 'time-left' });
+  // ---- 上の帯（練習の日は時間の代わりに「練習」） ----
+  const timeText = h('span', { className: 'time-left', text: practice ? t('practice.label') : '' });
   const timeBar = h('span', { className: 'time-bar__fill' });
+
+  // ---- 目標の一言／練習の案内 ----
+  const steps = [t('practice.step1'), t('practice.step2'), t('practice.step3')];
+  let step = 0;
+  let maxSeen = price;
+  const goal = h('p', { className: practice ? 'goal goal--practice' : 'goal', text: practice ? steps[0] : t('play.goal') });
+  const advance = () => {
+    if (!practice) return;
+    maxSeen = Math.max(maxSeen, price);
+    if (step === 0 && price >= p.startPrice + STEP_UP) step = 1;
+    else if (step === 1 && price <= maxSeen - STEP_DOWN) step = 2;
+    goal.textContent = steps[step] ?? '';
+  };
 
   // ---- 下の操作 ----
   const minus = button(t('play.minus'), () => setPrice(price - slider.fineStep), 'btn btn--fine');
@@ -69,72 +52,45 @@ export function ladderScreen(p: AuctionProps): ScreenView {
   const controls = h('div', { className: 'ladder-controls' }, [h('div', { className: 'fine-row' }, [minus, priceText, plus]), decideBtn]);
   const sheet = h('section', { className: 'reveal reveal--flow', attrs: { hidden: '' } });
 
-  const el = h('main', { className: 'screen screen--ladder' }, [
+  const el = h('main', { className: `screen screen--ladder${practice ? ' practice' : ''}` }, [
     h('div', { className: 'auction-head' }, [
       h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }),
       h('span', { className: 'company', text: td(`company.${market.company}`) }),
       timeText,
     ]),
-    h('div', { className: 'time-bar', attrs: { 'aria-hidden': 'true' } }, [timeBar]),
-    h('p', { className: 'goal', text: t('play.goal') }),
+    practice ? null : h('div', { className: 'time-bar', attrs: { 'aria-hidden': 'true' } }, [timeBar]),
+    goal,
     h('div', { className: 'board-head' }, [
       h('span', { className: 'board-head__buy', text: t('play.buyers') }),
       h('span', { className: 'board-head__sell', text: t('play.sellers') }),
     ]),
-    board,
+    board.el,
     controls,
     sheet,
   ]);
 
   const paint = () => {
-    const g = glow(day, price);
-    buyChips.forEach((c, i) => c.classList.toggle('on', g.buyers[i] === true));
-    sellChips.forEach((c, i) => c.classList.toggle('on', g.sellers[i] === true));
-    const y = `${pos(price)}%`;
-    line.style.top = y;
-    buyZone.style.height = y;
-    sellZone.style.top = y;
-    const label = t('play.price', { price: yen(price) });
-    lineLabel.textContent = label;
-    priceText.textContent = label;
-    board.setAttribute('aria-valuenow', String(price));
-    board.setAttribute('aria-valuetext', label);
-    minus.disabled = decided || price <= lo;
-    plus.disabled = decided || price >= hi;
+    board.setPrice(price);
+    priceText.textContent = t('play.price', { price: yen(price) });
+    minus.disabled = decided || !started || price <= slider.min;
+    plus.disabled = decided || !started || price >= slider.max;
+    decideBtn.disabled = decided || !started;
   };
   function setPrice(next: number) {
-    if (decided) return;
+    if (decided || !started) return;
     price = clampPrice(next, slider);
     paint();
+    advance();
   }
-
-  // ---- 指で線を動かす（盤のどこを触っても、その高さの値段になる） ----
-  const fromPointer = (e: PointerEvent) => {
-    const r = board.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
-    setPrice(hi - ratio * (hi - lo));
-  };
-  let dragging = false;
-  board.addEventListener('pointerdown', (e) => {
-    if (decided) return;
-    dragging = true;
-    board.setPointerCapture(e.pointerId);
-    fromPointer(e);
-  });
-  board.addEventListener('pointermove', (e) => dragging && fromPointer(e));
-  const stop = () => {
-    dragging = false;
-  };
-  board.addEventListener('pointerup', stop);
-  board.addEventListener('pointercancel', stop);
-  board.addEventListener('keydown', (e) => {
+  board.onDrag(setPrice);
+  board.el.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp') setPrice(price + slider.step);
     else if (e.key === 'ArrowDown') setPrice(price - slider.step);
     else return;
     e.preventDefault();
   });
 
-  // ---- 10秒 ----
+  // ---- 10秒（練習の日はなし。行列が動き終わってから数える） ----
   const countdown = createCountdown(config.timeLimitSec);
   const limitMs = config.timeLimitSec * 1000;
   let raf = 0;
@@ -151,7 +107,7 @@ export function ladderScreen(p: AuctionProps): ScreenView {
     raf = requestAnimationFrame(tick);
   };
   const onVisibility = () => {
-    if (decided) return;
+    if (decided || practice || !started) return;
     const now = performance.now();
     if (document.hidden) {
       countdown.pause(now);
@@ -163,16 +119,17 @@ export function ladderScreen(p: AuctionProps): ScreenView {
   };
   document.addEventListener('visibilitychange', onVisibility);
 
-  // ---- 決める → 答え合わせ（盤の下に出す。正解の線を盤に重ねる） ----
+  // ---- 決める → 答え合わせ（組を線でつなぐ。正解の線を重ねる） ----
   function doDecide(timeout: boolean) {
     if (decided) return;
     decided = true;
-    dragging = false;
     cancelAnimationFrame(raf);
     paint();
+    board.setEnabled(false);
     el.classList.add('decided');
     if (timeout) timeText.textContent = t('play.timeUp');
-    if (price !== day.answer) answerLine.hidden = false;
+    if (price !== day.answer) board.setMarker(day.answer);
+    board.showPairs(price);
 
     const { judge } = p.onDecide({ price, timeout });
     sheet.replaceChildren(
@@ -188,9 +145,18 @@ export function ladderScreen(p: AuctionProps): ScreenView {
     sheet.hidden = false;
   }
 
+  // ---- 始まり：行列が前の日の位置から動く（案C）→ 10秒を数え始める ----
   paint();
-  countdown.start(performance.now());
-  raf = requestAnimationFrame(tick);
+  const begin = () => {
+    started = true;
+    paint();
+    if (practice) return;
+    countdown.start(performance.now());
+    raf = requestAnimationFrame(tick);
+  };
+  if (!practice) timeText.textContent = t('play.timeLeft', { sec: config.timeLimitSec });
+  if (prevDay) void board.slideFrom(prevDay, config.slideMs).then(begin);
+  else begin();
 
   return {
     el,
@@ -200,4 +166,3 @@ export function ladderScreen(p: AuctionProps): ScreenView {
     },
   };
 }
-
