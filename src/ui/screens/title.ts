@@ -2,14 +2,15 @@
 // オーナー 2026-11-20：タイトルを豪華に（A 動くミニ盤＋B 電光掲示板風の看板＋C 背景の飾り）
 
 import { config } from '../../data';
-import { t } from '../../i18n';
+import { t, td } from '../../i18n';
 import { button, externalLink, h } from '../dom';
 import { notes, portalLink, privacyLink, soundButton, versionLabel, type ScreenView } from '../parts';
 import { titleDemo } from '../titleDemo';
 
-export function titleScreen(onStart: () => void, onTutorial: () => void): ScreenView {
+/** companyId は「値付けを始める」で遊ぶ銘柄（流れる一言に名前を出す） */
+export function titleScreen(onStart: () => void, onTutorial: () => void, companyId: string): ScreenView {
   // B：電光掲示板風の看板。作品名を光る文字で出し、下に一言を流す
-  const ticker = t('app.ticker');
+  const ticker = t('app.ticker', { company: td(`company.${companyId}`) });
   const sign = h('div', { className: 'led-sign' }, [
     h('h1', { className: 'led-sign__name', text: t('app.name') }),
     h('div', { className: 'led-sign__ticker', attrs: { 'aria-hidden': 'true' } }, [

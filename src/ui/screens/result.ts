@@ -114,7 +114,8 @@ export function resultScreen(game: Game, scen: Scenario, next: Scenario, onRetry
   ]);
 
   // 画面に入ってから幅が決まるので、次のフレームで描く
-  const paint = () => drawChart(canvas, game.prices, answers, chartColors(), (n) => String(n));
+  // 横軸は「1日目」…（結果画像と同じ書き方）
+  const paint = () => drawChart(canvas, game.prices, answers, chartColors(), (n) => t('play.day', { n }));
   requestAnimationFrame(paint);
   window.addEventListener('resize', paint);
 

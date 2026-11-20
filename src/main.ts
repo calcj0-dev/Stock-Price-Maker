@@ -91,7 +91,8 @@ function startWithTutorial(): void {
 /** 各画面の左上の「‹ タイトル」から（オーナー 2026-11-20）。遊んでいた分は消える */
 function goTitle(): void {
   game = createGame();
-  show(titleScreen(start, startWithTutorial));
+  // 遊び終えたあとなら次の銘柄、途中で戻ったなら同じ銘柄の名前を出す
+  show(titleScreen(start, startWithTutorial, (finished ? nextScenario() : scenario()).id));
 }
 
 goTitle();

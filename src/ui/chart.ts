@@ -4,7 +4,7 @@
 export type ChartColors = { mine: string; answer: string; grid: string; text: string };
 export type ChartStyle = { fontPx: number; lineMine: number; lineAnswer: number; pad: { left: number; right: number; top: number; bottom: number } };
 
-const SCREEN_STYLE: ChartStyle = { fontPx: 11, lineMine: 2.5, lineAnswer: 3, pad: { left: 48, right: 14, top: 14, bottom: 26 } };
+const SCREEN_STYLE: ChartStyle = { fontPx: 11, lineMine: 2.5, lineAnswer: 3, pad: { left: 48, right: 26, top: 14, bottom: 26 } };
 
 /** 決まった大きさの ctx に描く（座標は ctx の単位） */
 export function drawChartOn(
