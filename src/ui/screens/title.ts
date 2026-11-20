@@ -1,7 +1,8 @@
 // S1 タイトル（設計書 2章・F-01）。右上にバージョン、まとめサイトへのリンク
 
+import { config } from '../../data';
 import { t } from '../../i18n';
-import { button, h } from '../dom';
+import { button, externalLink, h } from '../dom';
 import { figure, nitsukeshi } from '../figures';
 import { notes, portalLink, privacyLink, soundButton, versionLabel, type ScreenView } from '../parts';
 
@@ -22,7 +23,7 @@ export function titleScreen(onStart: () => void, onTutorial: () => void): Screen
       button(t('title.start'), onStart, 'btn btn--main'),
       button(t('title.tutorial'), onTutorial, 'btn btn--outline'),
     ]),
-    h('div', { className: 'title-foot' }, [portalLink(), h('p', { className: 'credit', text: t('app.credit') }), privacyLink(), notes()]),
+    h('div', { className: 'title-foot' }, [portalLink(), h('p', { className: 'credit' }, [externalLink(t('app.credit'), config.links.follow)]), privacyLink(), notes()]),
   ]);
   return { el };
 }

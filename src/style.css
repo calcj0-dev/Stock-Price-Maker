@@ -1317,3 +1317,8 @@ button {
   min-height: 48px;
   font-size: 16px;
 }
+.credit .link {
+  padding: 4px;
+  font-size: 12px;
+  color: var(--text-sub);
+}
