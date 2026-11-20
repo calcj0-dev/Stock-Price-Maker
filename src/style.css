@@ -1411,3 +1411,9 @@ button {
     animation: none;
   }
 }
+/* 結果の見出し：銘柄の名前はまとめて折り返す */
+.result-heading {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}

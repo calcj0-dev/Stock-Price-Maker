@@ -4,8 +4,9 @@ import { config } from '../data';
 import { t, td } from '../i18n';
 
 /** 投稿文（URL は含めない。X の投稿画面・Web Share には URL を別に渡す） */
-export function postText(score: number, titleId: string): string {
-  return t('share.text', { score, title: td(`titles.${titleId}`), hashtag: config.hashtag });
+/** 銘柄の名前も入れる（オーナー 2026-11-20：どの銘柄で遊んだかが分かるように） */
+export function postText(score: number, titleId: string, companyId: string): string {
+  return t('share.text', { company: td(`company.${companyId}`), score, title: td(`titles.${titleId}`), hashtag: config.hashtag });
 }
 
 /** X の文字数の数え方：URL は23、下の範囲の文字は1、それ以外（日本語など）は2。上限280 */

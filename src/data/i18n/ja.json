@@ -207,7 +207,7 @@
     }
   },
   "result": {
-    "heading": "5日間の結果",
+    "heading": "5日間の結果（{company}）",
     "chartMine": "あなたが決めた値段",
     "chartAnswer": "つり合いの値段（正解）",
     "chartNote": "株価チャートは、毎日のつり合いの値段をつないだものです",
@@ -243,7 +243,7 @@
     "t_empty": "取引が1組も成立しない日がありました"
   },
   "share": {
-    "text": "株の値付け師になって{score}点。称号：{title} #{hashtag}"
+    "text": "{company}の株の値付け師になって{score}点。称号：{title} #{hashtag}"
   },
   "image": {
     "titleLabel": "称号：{title}",

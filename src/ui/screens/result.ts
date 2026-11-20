@@ -41,6 +41,12 @@ function openDayBoard(day: Day, mine: number, reason: string): void {
   requestAnimationFrame(() => board.showPairs(day.answer));
 }
 
+/** 見出しは、銘柄の名前の途中では折り返さず、かっこの前で折り返す（小さいスマホで読みやすく） */
+function headingText(s: string): string {
+  // 全角のかっこの前に、見えない折り返し位置（ゼロ幅スペース）を入れる
+  return s.replace('\uFF08', '\u200B\uFF08');
+}
+
 /** next は「もう一回」で遊ぶ次の銘柄（ボタンに名前を出す） */
 export function resultScreen(game: Game, scen: Scenario, next: Scenario, onRetry: () => void, onHome: () => void): ScreenView {
   const sc = score(game.volumes, scen.totalMaxVolume);
@@ -69,7 +75,7 @@ export function resultScreen(game: Game, scen: Scenario, next: Scenario, onRetry
 
   // ---- シェア（設計書 5.5）：画像つきで共有できる端末は「画像を付けてシェア」、それ以外は X の投稿画面 ----
   let image: Blob | null = null;
-  const text = postText(sc, titleId);
+  const text = postText(sc, titleId, scen.id);
   // 画像ができる前から、画像つきで共有できる端末かを小さな見本で調べて、ボタンの文字を決めておく（文字が途中で変わらないように）
   const imageShareable = canShareImage(new Blob([], { type: 'image/png' }));
   const shareBtn = button(t(imageShareable ? 'result.shareImage' : 'result.share'), () => void onShare(), 'btn btn--main btn--share');
@@ -82,14 +88,14 @@ export function resultScreen(game: Game, scen: Scenario, next: Scenario, onRetry
     }
     openXIntent(text);
   }
-  const imageReady = renderResultImage({ prices: game.prices, answers, score: sc, sum, max: scen.totalMaxVolume, titleId }).then((b) => {
+  const imageReady = renderResultImage({ prices: game.prices, answers, score: sc, sum, max: scen.totalMaxVolume, titleId, company: td(`company.${scen.id}`) }).then((b) => {
     image = b;
     saveBtn.disabled = !b;
     return b;
   });
 
   const el = h('main', { className: 'screen screen--result' }, [
-    h('div', { className: 'result-head' }, [homeButton(onHome), h('h1', { className: 'result-heading', text: t('result.heading') }), soundButton()]),
+    h('div', { className: 'result-head' }, [homeButton(onHome), h('h1', { className: 'result-heading', text: headingText(t('result.heading', { company: td(`company.${scen.id}`) })) }), soundButton()]),
     h('div', { className: 'card' }, [legend, canvas, h('p', { className: 'chart-note', text: t('result.chartNote') })]),
     h('div', { className: 'score-block' }, [
       h('p', { className: 'score', text: t('result.score', { score: sc }) }),

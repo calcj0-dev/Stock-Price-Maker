@@ -9,7 +9,7 @@ const W = 1200;
 const H = 630;
 const FONT = 'system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif';
 
-export type ImageInput = { prices: number[]; answers: number[]; score: number; sum: number; max: number; titleId: string };
+export type ImageInput = { prices: number[]; answers: number[]; score: number; sum: number; max: number; titleId: string; company: string };
 
 function cssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -69,6 +69,11 @@ export async function renderResultImage(r: ImageInput): Promise<Blob | null> {
   ctx.fillStyle = TEXT;
   ctx.font = `800 34px ${FONT}`;
   ctx.fillText(t('app.name'), 40, 34);
+  // 遊んだ銘柄（オーナー 2026-11-20）を作品名の横に小さく
+  const nameW = ctx.measureText(t('app.name')).width;
+  ctx.fillStyle = SUB;
+  ctx.font = `700 22px ${FONT}`;
+  ctx.fillText(r.company, 40 + nameW + 20, 44);
 
   // 左：2本のチャートと凡例
   const cx = 40;
