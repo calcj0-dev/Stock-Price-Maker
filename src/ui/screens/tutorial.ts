@@ -31,7 +31,7 @@ export function tutorialScreen(onDone: () => void): ScreenView {
   let maxSeen = price;
   let solved = false;
 
-  const board = createBoard(tutorial, { className: 'board--tutorial' });
+  const board = createBoard(tutorial, { className: 'board--tutorial', avatar: true });
   const message = h('p', { className: 'tutorial-msg__text' });
   const sub = h('p', { className: 'tutorial-msg__sub' });
   const stepDots = h('div', { className: 'news-progress tutorial-dots', attrs: { 'aria-hidden': 'true' } }, STEPS.map(() => h('span')));

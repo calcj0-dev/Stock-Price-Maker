@@ -2,13 +2,15 @@
 
 import { t } from '../../i18n';
 import { button, h } from '../dom';
-import { notes, person, portalLink, privacyLink, soundButton, versionLabel, type ScreenView } from '../parts';
+import { figure, nitsukeshi } from '../figures';
+import { notes, portalLink, privacyLink, soundButton, versionLabel, type ScreenView } from '../parts';
 
 export function titleScreen(onStart: () => void, onTutorial: () => void): ScreenView {
+  // 見直し #8：タイトルの絵もゲームと同じ人と値付け師にそろえる
   const hero = h('div', { className: 'title-hero', attrs: { 'aria-hidden': 'true' } }, [
-    h('div', { className: 'title-hero__side' }, [person('buy'), person('buy'), person('buy')]),
-    h('div', { className: 'title-hero__mid', text: '¥' }),
-    h('div', { className: 'title-hero__side' }, [person('sell'), person('sell'), person('sell')]),
+    h('div', { className: 'title-hero__side on' }, [figure('buy'), figure('buy'), figure('buy')]),
+    nitsukeshi().el,
+    h('div', { className: 'title-hero__side on' }, [figure('sell'), figure('sell'), figure('sell')]),
   ]);
 
   const el = h('main', { className: 'screen screen--title' }, [

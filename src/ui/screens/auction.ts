@@ -36,7 +36,7 @@ export function auctionScreen(p: AuctionProps): ScreenView {
   let decided = false;
   let started = false;
 
-  const board = createBoard(day, { markerKind: 'answer' });
+  const board = createBoard(day, { markerKind: 'answer', avatar: true });
 
   const timeText = h('span', { className: 'time-left', text: t('play.timeLeft', { sec: config.timeLimitSec }) });
   const timeBar = h('span', { className: 'time-bar__fill' });

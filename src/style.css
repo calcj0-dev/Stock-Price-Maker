@@ -1043,3 +1043,139 @@ button {
 .face.alone {
   opacity: 0.45;
 }
+
+/* ---- 人の絵：立体の胸像（オーナー 2026-11-20）。光ると手を挙げて笑顔、光っていないと腕を組んで困り顔 ---- */
+.fig {
+  display: inline-block;
+  flex: none;
+  width: calc(22px * var(--fig-scale, 1));
+  height: calc(26px * var(--fig-scale, 1));
+  color: var(--off);
+  transition: color 0.08s, transform 0.12s, opacity 0.2s;
+}
+.fig__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+/* 売りたい人は左右反転（手を挙げる腕が盤の真ん中側に来る） */
+.fig--sell .fig__svg {
+  transform: scaleX(-1);
+}
+.fig__eye {
+  fill: rgb(0 0 0 / 0.62);
+}
+.fig__mouth {
+  display: none;
+  fill: none;
+  stroke: rgb(0 0 0 / 0.62);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+.fig__mouth--frown,
+.fig__arms-crossed {
+  display: inline;
+}
+.fig__arm-up {
+  display: none;
+}
+.on .fig--buy {
+  color: var(--buy);
+}
+.on .fig--sell {
+  color: var(--sell);
+}
+.on .fig {
+  transform: translateY(-1px);
+}
+.on .fig__mouth--frown,
+.on .fig__arms-crossed {
+  display: none;
+}
+.on .fig__mouth--smile,
+.on .fig__arm-up {
+  display: inline;
+}
+/* 組めなかった人：真顔で薄く */
+.fig.alone {
+  opacity: 0.45;
+}
+.fig.alone .fig__mouth--smile,
+.fig.alone .fig__arm-up {
+  display: none;
+}
+.fig.alone .fig__mouth--flat {
+  display: inline;
+}
+.rung__faces {
+  gap: calc(2px * var(--fig-scale, 1));
+}
+
+/* ---- 値付け師：右端で株価の札を持つ。動かす向きで引き上げる・押し下げる・支える ---- */
+.nitsuke {
+  position: absolute;
+  right: 0;
+  width: 44px;
+  height: 72px;
+  /* 手の高さ（72 のうち 34）を線に合わせる */
+  transform: translateY(-47%);
+  z-index: 6;
+  pointer-events: none;
+  color: var(--accent);
+}
+.nitsuke__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.nitsuke__band {
+  fill: var(--warn);
+}
+.nitsuke__body {
+  transform-box: view-box;
+  transform-origin: 25px 70px;
+  transition: transform 0.12s ease-out;
+}
+.nitsuke__pose {
+  display: none;
+}
+.nitsuke--hold .nitsuke__pose--hold,
+.nitsuke--pull .nitsuke__pose--pull,
+.nitsuke--push .nitsuke__pose--push {
+  display: inline;
+}
+.nitsuke--pull .nitsuke__body {
+  transform: rotate(8deg);
+}
+.nitsuke--push .nitsuke__body {
+  transform: rotate(-9deg);
+}
+.board--avatar .line-hint--sell {
+  right: 48px;
+}
+/* 正解・あなたの値段の札は左端に（右端は値付け師がいるので） */
+.marker-line span {
+  left: 4px;
+  right: auto;
+}
+.title-hero {
+  align-items: flex-end;
+  gap: 10px;
+}
+.title-hero .fig {
+  --fig-scale: 1.6;
+}
+.title-hero .nitsuke {
+  position: static;
+  transform: none;
+  width: 62px;
+  height: 100px;
+}
+.line-hint {
+  transition: opacity 0.4s;
+}
+.touched .line-hint {
+  opacity: 0;
+}

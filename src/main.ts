@@ -2,6 +2,7 @@
 
 import './style.css';
 import { initAnalytics } from './analytics';
+import { installFigureDefs } from './ui/figures';
 import { unlockAudio } from './audio';
 import { beginAuction, createGame, decide, nextDay, startPrice, type Game } from './core/game';
 import { market } from './data';
@@ -14,6 +15,7 @@ import { titleScreen } from './ui/screens/title';
 import { tutorialScreen } from './ui/screens/tutorial';
 
 setLocale('ja');
+installFigureDefs();
 initAnalytics();
 // iOS などでは、利用者が触ったときに音を鳴らせるようにする（決定 #9：最初から鳴る）
 document.addEventListener('pointerdown', unlockAudio, { capture: true });

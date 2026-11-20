@@ -6,7 +6,7 @@ import { glow, pairs, type Day } from '../core/market';
 import { market } from '../data';
 import { t, yen } from '../i18n';
 import { h } from './dom';
-import { face } from './parts';
+import { figure, nitsukeshi } from './figures';
 
 /** 盤に必要なのは行列だけ（本番の日も、チュートリアルの行列も使える） */
 export type BoardQueue = Pick<Day, 'buyers' | 'sellers'>;
@@ -38,7 +38,16 @@ type Level = { el: HTMLElement; price: number; faces: HTMLElement[]; first: numb
 /** 1人ずつ（光る・組になる・あぶれるは人ごと） */
 type Person = { level: Level; f: HTMLElement };
 
-export function createBoard(day: BoardQueue, opts: { className?: string; markerKind?: 'answer' | 'mine' } = {}): Board {
+/** 段どうしの間が、この高さ（px）より狭いと人を小さくする（小さいスマホで重ならないように） */
+const FIG_H = 26;
+const FIG_MIN_SCALE = 0.55;
+/** 値付け師の姿勢を「支える」に戻すまでの時間（ミリ秒） */
+const POSE_IDLE_MS = 260;
+
+export function createBoard(
+  day: BoardQueue,
+  opts: { className?: string; markerKind?: 'answer' | 'mine'; avatar?: boolean } = {},
+): Board {
   const lo = market.slider.min;
   const hi = market.slider.max;
   const pos = (v: number) => ((hi - v) / (hi - lo)) * 100;
@@ -54,7 +63,7 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
         lv = { el, price: v, faces: [], first: i, box };
         levels.set(v, lv);
       }
-      const f = face(side);
+      const f = figure(side);
       lv.box.append(f);
       lv.faces.push(f);
       return { level: lv, f };
@@ -86,7 +95,10 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
   svg.setAttribute('class', 'pair-lines');
   svg.setAttribute('aria-hidden', 'true');
 
-  const el = h('div', { className: `board ${opts.className ?? ''}` }, [
+  // 右端の値付け師（セリとチュートリアルだけ。結果画面の盤には出さない）
+  const avatar = opts.avatar ? nitsukeshi() : null;
+
+  const el = h('div', { className: `board ${opts.className ?? ''}${avatar ? ' board--avatar' : ''}` }, [
     buyZone,
     sellZone,
     ...ticks,
@@ -94,7 +106,25 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
     ...allLevels().map((x) => x.el),
     marker,
     line,
+    avatar?.el,
   ]);
+
+  // 段どうしの一番狭い間（盤の高さに対する割合）から、人の大きさを決める
+  const gapRatio = (() => {
+    const v = [...new Set(day.buyers)].sort((a, b) => a - b);
+    const w = [...new Set(day.sellers)].sort((a, b) => a - b);
+    let g = Infinity;
+    for (const list of [v, w]) for (let i = 1; i < list.length; i++) g = Math.min(g, list[i]! - list[i - 1]!);
+    return Number.isFinite(g) ? g / (hi - lo) : 1;
+  })();
+  const fitFigures = () => {
+    const px = el.clientHeight * gapRatio;
+    if (px > 0) el.style.setProperty('--fig-scale', String(Math.max(FIG_MIN_SCALE, Math.min(1, px / FIG_H))));
+  };
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fitFigures).observe(el);
+
+  let lastPrice: number | null = null;
+  let poseTimer = 0;
 
   let enabled = true;
   let dragFn: ((p: number) => void) | null = null;
@@ -111,6 +141,18 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
       buyZone.style.height = y;
       sellZone.style.top = y;
       lineLabel.textContent = t('play.price', { price: yen(price) });
+      if (avatar) {
+        avatar.el.style.top = y;
+        // 上げている間は引き上げる、下げている間は押し下げる、止まったら支える
+        if (lastPrice !== null && price !== lastPrice) {
+          avatar.setPose(price > lastPrice ? 'pull' : 'push');
+          clearTimeout(poseTimer);
+          poseTimer = window.setTimeout(() => avatar.setPose('hold'), POSE_IDLE_MS);
+        }
+      }
+      // 線が動き始めたら決まりのヒントを消す（その日の始めの案内として出す。人の数字に重ならないように）
+      if (lastPrice !== null && price !== lastPrice) el.classList.add('touched');
+      lastPrice = price;
     },
     setMarker(price) {
       marker.hidden = price === null;
