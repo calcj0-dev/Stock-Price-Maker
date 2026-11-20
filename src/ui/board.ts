@@ -22,6 +22,13 @@ export type Board = {
   setMarker(price: number | null): void;
   /** 取引の組を線でつなぎ、あぶれた人を示す（案A）。描いた組の数を返す */
   showPairs(price: number, animate?: boolean): number;
+  /**
+   * 握手の場面（オーナー 2026-11-20）：組になった買いたい人と売りたい人が1組ずつ真ん中に出てきて握手し、数を数え上げる。
+   * 終わると組の線が残る。onDeal は1組ごとに呼ぶ（音など）。終わった組の数で解決する
+   */
+  playHandshakes(price: number, onDeal?: (n: number) => void): Promise<number>;
+  /** 握手の場面を最後まで飛ばす */
+  skipHandshakes(): void;
   /** 前の日の位置から今日の位置へ動かす（案C） */
   slideFrom(prev: BoardQueue, ms: number): Promise<void>;
   /** 組の線を消す */
@@ -43,6 +50,11 @@ const FIG_H = 26;
 const FIG_MIN_SCALE = 0.55;
 /** 値付け師の姿勢を「支える」に戻すまでの時間（ミリ秒） */
 const POSE_IDLE_MS = 260;
+/** 握手の場面の速さ（ミリ秒）：歩み寄る・握手・消える、次の組までの間 */
+const WALK_MS = 280;
+const SHAKE_MS = 260;
+const FADE_MS = 180;
+const STEP_MS = 280;
 
 export function createBoard(
   day: BoardQueue,
@@ -123,6 +135,40 @@ export function createBoard(
   };
   if (typeof ResizeObserver !== 'undefined') new ResizeObserver(fitFigures).observe(el);
 
+  // 組を作り、あぶれた人に印を付ける（線と握手で共通）
+  const startPairs = (price: number) => {
+    board.clearPairs();
+    const r = pairs(day, price);
+    for (const i of r.aloneBuyers) buy.people[i]?.f.classList.add('alone');
+    for (const i of r.aloneSellers) sell.people[i]?.f.classList.add('alone');
+    // 段の全員があぶれたら、段の数字にも線を引く
+    for (const lv of allLevels()) lv.el.classList.toggle('alone', lv.faces.every((x) => x.classList.contains('alone')));
+    const box = el.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    return r;
+  };
+  // 組の線を1本引く（直線。オーナー 2026-11-19）
+  const drawPairLine = (bi: number, si: number, delayMs: number) => {
+    const bf = buy.people[bi]?.f;
+    const sf = sell.people[si]?.f;
+    if (!bf || !sf) return;
+    const box = el.getBoundingClientRect();
+    const c = (x: HTMLElement) => {
+      const b = x.getBoundingClientRect();
+      return { x: b.left + b.width / 2 - box.left, y: b.top + b.height / 2 - box.top };
+    };
+    const a = c(bf);
+    const b = c(sf);
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', `M${a.x},${a.y} L${b.x},${b.y}`);
+    path.setAttribute('pathLength', '1');
+    path.style.animationDelay = `${delayMs}ms`;
+    svg.append(path);
+    bf.classList.add('paired');
+    sf.classList.add('paired');
+  };
+  let skipFn: (() => void) | null = null;
+
   let lastPrice: number | null = null;
   let poseTimer = 0;
 
@@ -161,6 +207,7 @@ export function createBoard(
       markerLabel.textContent = t('play.price', { price: yen(price) });
     },
     clearPairs() {
+      for (const n of el.querySelectorAll('.deal-count, .walker')) n.remove();
       for (const p of allPeople()) p.f.classList.remove('alone', 'paired');
       for (const lv of allLevels()) lv.el.classList.remove('alone');
       svg.replaceChildren();
@@ -171,34 +218,94 @@ export function createBoard(
     },
     showPairs(price, animate = true) {
       svg.classList.toggle('pair-lines--static', !animate);
-      board.clearPairs();
-      const r = pairs(day, price);
-      for (const i of r.aloneBuyers) buy.people[i]?.f.classList.add('alone');
-      for (const i of r.aloneSellers) sell.people[i]?.f.classList.add('alone');
-      // 段の全員があぶれたら、段の数字にも線を引く
-      for (const lv of allLevels()) lv.el.classList.toggle('alone', lv.faces.every((f) => f.classList.contains('alone')));
-      const box = el.getBoundingClientRect();
-      const center = (f: HTMLElement) => {
-        const b = f.getBoundingClientRect();
-        return { x: b.left + b.width / 2 - box.left, y: b.top + b.height / 2 - box.top };
-      };
-      svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-      r.pairs.forEach(([bi, si], k) => {
-        const bf = buy.people[bi]?.f;
-        const sf = sell.people[si]?.f;
-        if (!bf || !sf) return;
-        const a = center(bf);
-        const b = center(sf);
-        const path = document.createElementNS(SVG_NS, 'path');
-        // 直線でつなぐ（オーナー 2026-11-19）
-        path.setAttribute('d', `M${a.x},${a.y} L${b.x},${b.y}`);
-        path.setAttribute('pathLength', '1');
-        path.style.animationDelay = `${k * 90}ms`;
-        svg.append(path);
-        bf.classList.add('paired');
-        sf.classList.add('paired');
-      });
+      const r = startPairs(price);
+      r.pairs.forEach(([bi, si], k) => drawPairLine(bi, si, k * 90));
       return r.pairs.length;
+    },
+    playHandshakes(price, onDeal) {
+      svg.classList.add('pair-lines--static');
+      const r = startPairs(price);
+      const box = el.getBoundingClientRect();
+      const lineY = (pos(price) / 100) * box.height;
+      const cx = box.width / 2;
+      const badge = h('div', { className: 'deal-count' });
+      el.append(badge);
+      const timers: number[] = [];
+      const walkers: HTMLElement[] = [];
+      const hidden: HTMLElement[] = [];
+      let done = false;
+      return new Promise((resolve) => {
+        const finish = () => {
+          if (done) return;
+          done = true;
+          skipFn = null;
+          timers.forEach((id) => clearTimeout(id));
+          walkers.forEach((w) => w.remove());
+          hidden.forEach((x) => x.classList.remove('walking'));
+          svg.replaceChildren();
+          r.pairs.forEach(([bi, si]) => drawPairLine(bi, si, 0));
+          badge.style.top = `${lineY}px`;
+          badge.textContent = t('reveal.pairCount', { n: r.pairs.length });
+          badge.classList.add('deal-count--final');
+          resolve(r.pairs.length);
+        };
+        skipFn = finish;
+        if (r.pairs.length === 0) {
+          finish();
+          return;
+        }
+        // 歩み寄る人の分身を、元の人の位置から真ん中（決めた値段の線のすぐ上）へ動かす
+        const walker = (fig: HTMLElement, side: 'buy' | 'sell') => {
+          const b = fig.getBoundingClientRect();
+          const left = b.left - box.left;
+          const top = b.top - box.top;
+          const w = h('span', { className: `walker walker--${side} on` }, [figure(side)]);
+          w.style.left = `${left}px`;
+          w.style.top = `${top}px`;
+          el.append(w);
+          walkers.push(w);
+          fig.classList.add('walking');
+          hidden.push(fig);
+          const tx = (side === 'buy' ? cx - b.width + 1 : cx - 1) - left;
+          const ty = lineY - b.height - 16 - top;
+          return { w, fig, tx, ty, height: b.height };
+        };
+        r.pairs.forEach(([bi, si], k) => {
+          timers.push(
+            window.setTimeout(() => {
+              const bf = buy.people[bi]?.f;
+              const sf = sell.people[si]?.f;
+              if (!bf || !sf) return;
+              const a = walker(bf, 'buy');
+              const c = walker(sf, 'sell');
+              requestAnimationFrame(() => {
+                a.w.style.transform = `translate(${a.tx}px, ${a.ty}px)`;
+                c.w.style.transform = `translate(${c.tx}px, ${c.ty}px)`;
+              });
+              timers.push(
+                window.setTimeout(() => {
+                  a.w.classList.add('meet');
+                  c.w.classList.add('meet');
+                  badge.style.top = `${lineY - a.height - 16}px`;
+                  badge.textContent = t('reveal.pairCount', { n: k + 1 });
+                  onDeal?.(k + 1);
+                }, WALK_MS),
+                window.setTimeout(() => {
+                  a.w.classList.add('leave');
+                  c.w.classList.add('leave');
+                  a.fig.classList.remove('walking');
+                  c.fig.classList.remove('walking');
+                  drawPairLine(bi, si, 0);
+                }, WALK_MS + SHAKE_MS),
+              );
+            }, k * STEP_MS),
+          );
+        });
+        timers.push(window.setTimeout(finish, (r.pairs.length - 1) * STEP_MS + WALK_MS + SHAKE_MS + FADE_MS + 60));
+      });
+    },
+    skipHandshakes() {
+      skipFn?.();
     },
     slideFrom(prev, ms) {
       if (ms <= 0) return Promise.resolve();

@@ -146,7 +146,6 @@ export function auctionScreen(p: AuctionProps): ScreenView {
 
     const { judge } = p.onDecide({ price, timeout });
     cue('decide');
-    cue(judge === 'exact' ? 'exact' : 'miss', 0.45);
     sheet.replaceChildren(
       ...[
         timeout ? h('p', { className: 'reveal__timeup', text: t('play.timeUp') }) : null,
@@ -157,6 +156,8 @@ export function auctionScreen(p: AuctionProps): ScreenView {
         button(t(p.isLastDay ? 'reveal.toResult' : 'reveal.nextDay'), p.onNext, 'btn btn--main'),
       ].filter((x) => x !== null),
     );
+    // 握手の場面が終わるまで、答え合わせの文は場所だけ取って隠す（盤の大きさが途中で変わらないように）
+    sheet.classList.add('pending');
     sheet.hidden = false;
     // 答え合わせは画面の下に重ねず、盤を縮めて「次の日へ」までスクロールなしで見えるようにする（見直し #1）
     window.scrollTo(0, 0);
@@ -164,7 +165,18 @@ export function auctionScreen(p: AuctionProps): ScreenView {
       const top = board.el.getBoundingClientRect().top;
       const avail = window.innerHeight - top - sheet.offsetHeight - 12;
       board.el.style.height = `${Math.max(MIN_BOARD_AFTER, Math.floor(avail))}px`;
-      requestAnimationFrame(() => board.showPairs(price));
+      requestAnimationFrame(() => {
+        // 握手の場面（1組ずつ数え上げる）。画面を触ると最後まで飛ばす
+        const skip = () => board.skipHandshakes();
+        el.addEventListener('pointerdown', skip);
+        void board
+          .playHandshakes(price, () => cue('glow'))
+          .then(() => {
+            el.removeEventListener('pointerdown', skip);
+            sheet.classList.remove('pending');
+            cue(judge === 'exact' ? 'exact' : 'miss');
+          });
+      });
     });
   }
 
