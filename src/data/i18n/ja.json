@@ -44,7 +44,8 @@
     },
     "dayLabel": "{n}日目のニュース",
     "startDay": "はじめる",
-    "yesterday": "昨日の株価 {price}円"
+    "yesterday": "昨日の株価 {price}円",
+    "history": "これまでの株価"
   },
   "play": {
     "day": "{n}日目",

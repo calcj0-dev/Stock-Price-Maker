@@ -87,3 +87,83 @@ export function chartColors(): ChartColors {
     text: css.getPropertyValue('--text-sub').trim(),
   };
 }
+
+/**
+ * ニュースの画面の「これまでの株価」（オーナー 2026-11-20）。昨日までの株価（つり合いの値段）を線でつなぎ、今日の所は「？」。
+ * 縦の目盛りは毎日同じ範囲にする（先の値段の手がかりにならないように）
+ */
+export function drawHistory(
+  canvas: HTMLCanvasElement,
+  past: number[],
+  totalDays: number,
+  range: { lo: number; hi: number; step: number },
+  colors: ChartColors & { today: string },
+  dayLabel: (n: number) => string,
+): void {
+  const w = canvas.clientWidth || 340;
+  const hgt = canvas.clientHeight || 170;
+  const dpr = Math.min(window.devicePixelRatio || 1, 3);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(hgt * dpr);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, hgt);
+  const pad = { left: 46, right: 18, top: 14, bottom: 26 };
+  const x = (i: number) => pad.left + (i * (w - pad.left - pad.right)) / Math.max(1, totalDays - 1);
+  const y = (v: number) => pad.top + ((range.hi - v) * (hgt - pad.top - pad.bottom)) / (range.hi - range.lo);
+  const font = 'system-ui, "Hiragino Sans", "Noto Sans JP", sans-serif';
+
+  ctx.font = `11px ${font}`;
+  ctx.fillStyle = colors.text;
+  ctx.strokeStyle = colors.grid;
+  ctx.lineWidth = 1;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let v = range.lo; v <= range.hi; v += range.step) {
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y(v));
+    ctx.lineTo(w - pad.right, y(v));
+    ctx.stroke();
+    ctx.fillText(v.toLocaleString('ja-JP'), pad.left - 6, y(v));
+  }
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let i = 0; i < totalDays; i++) ctx.fillText(dayLabel(i + 1), x(i), hgt - pad.bottom + 8);
+
+  // 昨日までの株価
+  ctx.strokeStyle = colors.answer;
+  ctx.fillStyle = colors.answer;
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  past.forEach((v, i) => (i === 0 ? ctx.moveTo(x(i), y(v)) : ctx.lineTo(x(i), y(v))));
+  ctx.stroke();
+  past.forEach((v, i) => {
+    ctx.beginPath();
+    ctx.arc(x(i), y(v), 4.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // 今日は「？」（昨日の高さ。1日目は真ん中）
+  const ti = past.length;
+  const ty = past.length ? y(past[past.length - 1]!) : (y(range.lo) + y(range.hi)) / 2;
+  if (past.length) {
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = colors.today;
+    ctx.beginPath();
+    ctx.moveTo(x(ti - 1), ty);
+    ctx.lineTo(x(ti), ty);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.fillStyle = colors.today;
+  ctx.beginPath();
+  ctx.arc(x(ti), ty, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = `800 16px ${font}`;
+  ctx.textBaseline = 'middle';
+  ctx.fillText('?', x(ti), ty + 1);
+}
