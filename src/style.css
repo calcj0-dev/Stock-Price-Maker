@@ -1417,3 +1417,39 @@ button {
   overflow-wrap: anywhere;
   line-height: 1.35;
 }
+
+/* ---- 明るく（オーナー 2026-11-20：灰色・ベージュが多くて暗い） ----
+   面（カード・盤・ニュース）は白に細い枠と薄い影。外側は明るいグラデーション。光っていない人も少し明るく */
+:root {
+  --surface: #fafaf8;
+  --line: #ebe8e2;
+  --off: #dedbd5;
+  --off-text: #aaa59c;
+  --buy-soft: #e3f7ec;
+  --sell-soft: #fff0df;
+}
+html,
+body {
+  background: linear-gradient(180deg, #eef6fb 0%, #fdf9f1 100%) fixed;
+}
+.card,
+.news-card,
+.news-history,
+.board {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 12px rgb(31 29 26 / 0.05);
+}
+.news-card {
+  border-top: 6px solid var(--accent);
+}
+.tick span {
+  background: #ffffff;
+}
+.queue__title--buy,
+.legend {
+  background: transparent;
+}
+.modal--board .board {
+  box-shadow: none;
+}
