@@ -23,6 +23,11 @@ export type AuctionProps = {
   onNext: () => void;
 };
 
+/** 答え合わせのとき、盤をここまでは縮めてよい（px） */
+const MIN_BOARD_AFTER = 220;
+/** 「ポッ」を続けて鳴らさない間隔（ミリ秒。見直し #10） */
+const POP_GAP_MS = 90;
+
 export function auctionScreen(p: AuctionProps): ScreenView {
   const { slider } = market;
   const { day } = p;
@@ -63,11 +68,16 @@ export function auctionScreen(p: AuctionProps): ScreenView {
 
   // 光る人が変わったときだけ「ポッ」
   let glowKey = '';
+  let lastPop = 0;
   const paint = () => {
     board.setPrice(price);
     const g = volume(day, price);
     const key = `${g.buyers}-${g.sellers}`;
-    if (glowKey && key !== glowKey && !decided) cue('glow');
+    const now = performance.now();
+    if (glowKey && key !== glowKey && !decided && now - lastPop >= POP_GAP_MS) {
+      cue('glow');
+      lastPop = now;
+    }
     glowKey = key;
     priceText.textContent = t('play.price', { price: yen(price) });
     minus.disabled = decided || !started || price <= slider.min;
@@ -133,7 +143,6 @@ export function auctionScreen(p: AuctionProps): ScreenView {
     el.classList.add('decided');
     if (timeout) timeText.textContent = t('play.timeUp');
     if (price !== day.answer) board.setMarker(day.answer);
-    board.showPairs(price);
 
     const { judge } = p.onDecide({ price, timeout });
     cue('decide');
@@ -149,6 +158,14 @@ export function auctionScreen(p: AuctionProps): ScreenView {
       ].filter((x) => x !== null),
     );
     sheet.hidden = false;
+    // 答え合わせは画面の下に重ねず、盤を縮めて「次の日へ」までスクロールなしで見えるようにする（見直し #1）
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+      const top = board.el.getBoundingClientRect().top;
+      const avail = window.innerHeight - top - sheet.offsetHeight - 12;
+      board.el.style.height = `${Math.max(MIN_BOARD_AFTER, Math.floor(avail))}px`;
+      requestAnimationFrame(() => board.showPairs(price));
+    });
   }
 
   // ---- 始まり：行列が前の日の位置から動く（案C）→ 10秒を数え始める ----

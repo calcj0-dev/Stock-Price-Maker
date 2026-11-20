@@ -60,8 +60,7 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
       const prev = market.days[i - 1]?.answer ?? d.answer;
       const reason = td(`reasons.${d.news}`, { prev: yen(prev), answer: yen(d.answer) });
       return h('li', {}, [
-        h('span', { className: `daily__judge daily__judge--${j}`, text: t('result.dayLine', { n: d.day, text: t(`reveal.${j}`) }) }),
-        h('span', { className: 'daily__reason', text: reason }),
+        h('span', { className: `daily__judge daily__judge--${j}`, text: t('result.dayLine', { n: d.day, judge: t(`result.judgeShort.${j}`), v: game.volumes[i] ?? 0, max: d.maxVolume }) }),
         button(t('result.viewBoard'), () => openDayBoard(d, game.prices[i] ?? d.answer, reason), 'btn btn--small'),
       ]);
     }),
@@ -97,9 +96,10 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
       h('p', { className: 'title-won', text: td(`titles.${titleId}`) }),
       note !== `titleNotes.${titleId}` ? h('p', { className: 'title-note', text: note }) : null,
     ]),
+    // 見直し #6：シェアは点数と称号のすぐ下
+    h('div', { className: 'share-row' }, [shareBtn, saveBtn]),
     h('section', { className: 'card' }, [h('h2', { text: t('result.daily') }), daily]),
     h('section', { className: 'card card--learn' }, [h('p', { text: t('result.summary') }), h('p', { text: t('result.realWorld') })]),
-    h('div', { className: 'share-row' }, [shareBtn, saveBtn]),
     button(t('result.retry'), onRetry, 'btn btn--outline'),
     makerApps(),
     privacyLink(),

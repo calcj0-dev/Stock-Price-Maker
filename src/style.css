@@ -696,7 +696,7 @@ button {
   fill: none;
   stroke: var(--accent);
   stroke-width: 1.5;
-  stroke-opacity: 0.55;
+  stroke-opacity: 0.35;
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: draw 0.35s ease-out forwards;
@@ -961,4 +961,72 @@ button {
 }
 .result-head .result-heading {
   padding-top: 0;
+}
+
+/* ---- 見直し #1・#2：答え合わせは盤の下にまとめて置き、決めたあとは盤の上でもスクロールできる ---- */
+.decided .board {
+  touch-action: auto;
+}
+.reveal--flow {
+  margin-top: 10px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  gap: 2px;
+}
+.reveal--flow .reveal__judge {
+  font-size: 17px;
+}
+.reveal--flow .reveal__judge--exact {
+  font-size: 20px;
+}
+.reveal--flow .reveal__volume,
+.reveal--flow .reveal__answer {
+  font-size: 15px;
+}
+.reveal--flow .reveal__reason {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+/* 見直し #4：線のすぐ上（左）と下（右）に決まりのヒント */
+.line-hint {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.line-hint--buy {
+  left: 4px;
+  bottom: 4px;
+  color: var(--buy);
+  background: rgb(255 255 255 / 0.75);
+}
+.line-hint--sell {
+  right: 4px;
+  top: 6px;
+  color: var(--sell);
+  background: rgb(255 255 255 / 0.75);
+}
+.decided .line-hint {
+  display: none;
+}
+/* 見直し #5：ニュースの昨日の株価 */
+.news-yesterday {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+/* 見直し #7：日ごとの一言は1行とボタン */
+.daily li {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+.daily .btn--small {
+  margin-top: 0;
 }

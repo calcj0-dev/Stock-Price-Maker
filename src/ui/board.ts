@@ -53,7 +53,12 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
   }
 
   const lineLabel = h('span', { className: 'price-line__label' });
-  const line = h('div', { className: 'price-line' }, [lineLabel]);
+  // 見直し #4：チュートリアルを飛ばした人にも決まりが分かるよう、線のすぐ上と下に小さく書く
+  const line = h('div', { className: 'price-line' }, [
+    lineLabel,
+    h('span', { className: 'line-hint line-hint--buy', text: t('play.hintBuy') }),
+    h('span', { className: 'line-hint line-hint--sell', text: t('play.hintSell') }),
+  ]);
   const markerLabel = h('span');
   const marker = h('div', { className: `marker-line marker-line--${opts.markerKind ?? 'answer'}`, attrs: { hidden: '' } }, [markerLabel]);
   const buyZone = h('div', { className: 'zone zone--buy' });
