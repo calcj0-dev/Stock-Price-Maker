@@ -35,14 +35,14 @@ function show(view: ScreenView): void {
 function render(): void {
   const day = market.days[game.day];
   if (game.phase === 'result' || !day) {
-    show(resultScreen(game, () => start()));
+    show(resultScreen(game, () => start(), goTitle));
     return;
   }
   if (game.phase === 'news') {
     show(newsScreen(day, () => {
       beginAuction(game);
       render();
-    }));
+    }, goTitle));
     return;
   }
   show(auctionScreen({
@@ -58,6 +58,7 @@ function render(): void {
       nextDay(game, market.days);
       render();
     },
+    onHome: goTitle,
   }));
 }
 
@@ -68,7 +69,13 @@ function start(): void {
 
 /** タイトルの「チュートリアル」ボタンから（オーナー 2026-11-19：専用ボタン。「始める」はすぐ1日目へ） */
 function startWithTutorial(): void {
-  show(tutorialScreen(start));
+  show(tutorialScreen(start, goTitle));
 }
 
-show(titleScreen(start, startWithTutorial));
+/** 各画面の左上の「‹ タイトル」から（オーナー 2026-11-20）。遊んでいた分は消える */
+function goTitle(): void {
+  game = createGame();
+  show(titleScreen(start, startWithTutorial));
+}
+
+goTitle();

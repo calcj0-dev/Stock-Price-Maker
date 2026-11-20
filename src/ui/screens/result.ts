@@ -11,7 +11,7 @@ import { renderResultImage } from '../../share/resultImage';
 import { canShareImage, openXIntent, saveImage, shareWithImage } from '../../share/share';
 import { chartColors, drawChart } from '../chart';
 import { button, h } from '../dom';
-import { makerApps, notes, privacyLink, soundButton, type ScreenView } from '../parts';
+import { homeButton, makerApps, notes, privacyLink, soundButton, type ScreenView } from '../parts';
 
 /**
  * 案B：その日の正解を盤で見る。正解の値段で光る人と取引の組を見せ、あなたの値段は点線で重ねる
@@ -41,7 +41,7 @@ function openDayBoard(day: Day, mine: number, reason: string): void {
   requestAnimationFrame(() => board.showPairs(day.answer));
 }
 
-export function resultScreen(game: Game, onRetry: () => void): ScreenView {
+export function resultScreen(game: Game, onRetry: () => void, onHome: () => void): ScreenView {
   const sc = score(game.volumes, market.totalMaxVolume);
   const titleId = title(game.prices, game.volumes, sc, config.titles);
   const sum = game.volumes.reduce((a, b) => a + b, 0);
@@ -88,7 +88,7 @@ export function resultScreen(game: Game, onRetry: () => void): ScreenView {
   });
 
   const el = h('main', { className: 'screen screen--result' }, [
-    h('div', { className: 'result-head' }, [h('h1', { className: 'result-heading', text: t('result.heading') }), soundButton()]),
+    h('div', { className: 'result-head' }, [homeButton(onHome), h('h1', { className: 'result-heading', text: t('result.heading') }), soundButton()]),
     h('div', { className: 'card' }, [legend, canvas, h('p', { className: 'chart-note', text: t('result.chartNote') })]),
     h('div', { className: 'score-block' }, [
       h('p', { className: 'score', text: t('result.score', { score: sc }) }),

@@ -6,12 +6,12 @@ import { t, td, yen } from '../../i18n';
 import { chartColors, drawHistory } from '../chart';
 import { button, h } from '../dom';
 import { cue } from '../../audio';
-import { soundButton, type ScreenView } from '../parts';
+import { homeButton, soundButton, type ScreenView } from '../parts';
 
 /** これまでの株価の目盛り（毎日同じ。先の値段の手がかりにならないように） */
 const HISTORY_RANGE = { lo: 900, hi: 1200, step: 100 };
 
-export function newsScreen(day: Day, onBegin: () => void): ScreenView {
+export function newsScreen(day: Day, onBegin: () => void, onHome: () => void): ScreenView {
   const prev = market.days[day.day - 2];
   // オーナー 2026-11-20：空白を埋め、結果画面の「株価チャート」が育っていく様子を途中から見せる
   const canvas = h('canvas', { className: 'history-chart', attrs: { role: 'img', 'aria-label': t('news.history') } });
@@ -21,7 +21,7 @@ export function newsScreen(day: Day, onBegin: () => void): ScreenView {
     prev ? h('p', { className: 'news-yesterday', text: t('news.yesterday', { price: yen(prev.answer) }) }) : null,
   ]);
   const el = h('main', { className: 'screen screen--news' }, [
-    h('div', { className: 'top-bar top-bar--left' }, [h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }), h('span', { className: 'spacer' }), soundButton()]),
+    h('div', { className: 'top-bar top-bar--left' }, [homeButton(onHome, {}), h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }), h('span', { className: 'spacer' }), soundButton()]),
     h('article', { className: 'news-card' }, [
       h('p', { className: 'news-card__label', text: t('news.dayLabel', { n: day.day }) }),
       h('p', { className: 'news-card__company', text: td(`company.${market.company}`) }),

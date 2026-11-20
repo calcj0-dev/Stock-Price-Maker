@@ -9,7 +9,7 @@ import { config, market } from '../../data';
 import { t, yen, type MessageKey } from '../../i18n';
 import { createBoard } from '../board';
 import { button, h, linkButton } from '../dom';
-import { soundButton, type ScreenView } from '../parts';
+import { homeButton, soundButton, type ScreenView } from '../parts';
 
 type Step = { text: MessageKey; kind: 'next' | 'drag' | 'decide' | 'end'; focus?: 'buy' | 'sell' };
 const STEPS: Step[] = [
@@ -23,7 +23,7 @@ const STEPS: Step[] = [
 /** 「動かしてみよう」は、合わせてこの幅（円）を動かしたら次へ進める */
 const DRAG_RANGE = 300;
 
-export function tutorialScreen(onDone: () => void): ScreenView {
+export function tutorialScreen(onDone: () => void, onHome: () => void): ScreenView {
   const { slider, tutorial } = market;
   let price = clampPrice(tutorial.start, slider);
   let step = 0;
@@ -43,6 +43,7 @@ export function tutorialScreen(onDone: () => void): ScreenView {
 
   const el = h('main', { className: 'screen screen--ladder screen--tutorial' }, [
     h('div', { className: 'auction-head' }, [
+      homeButton(onHome),
       h('span', { className: 'day-chip', text: t('tutorial.heading') }),
       h('span', { className: 'tutorial-skip' }, [linkButton(t('tutorial.skip'), onDone)]),
       soundButton(),

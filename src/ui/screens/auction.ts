@@ -10,7 +10,7 @@ import { config, market } from '../../data';
 import { t, td, yen } from '../../i18n';
 import { createBoard } from '../board';
 import { button, h } from '../dom';
-import { soundButton, type ScreenView } from '../parts';
+import { homeButton, soundButton, type ScreenView } from '../parts';
 
 export type Decision = { price: number; timeout: boolean };
 export type AuctionProps = {
@@ -21,6 +21,8 @@ export type AuctionProps = {
   isLastDay: boolean;
   onDecide: (d: Decision) => { judge: Judge };
   onNext: () => void;
+  /** 左上の「‹ タイトル」（確かめてから戻る） */
+  onHome: () => void;
 };
 
 /** 答え合わせのとき、盤をここまでは縮めてよい（px） */
@@ -50,6 +52,7 @@ export function auctionScreen(p: AuctionProps): ScreenView {
 
   const el = h('main', { className: 'screen screen--ladder' }, [
     h('div', { className: 'auction-head' }, [
+      homeButton(p.onHome, { onOpen: () => pauseClock(true), onClose: () => pauseClock(false) }),
       h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }),
       h('span', { className: 'company', text: td(`company.${market.company}`) }),
       timeText,
@@ -120,16 +123,31 @@ export function auctionScreen(p: AuctionProps): ScreenView {
     }
     raf = requestAnimationFrame(tick);
   };
-  const onVisibility = () => {
+  // 止める理由（画面が裏に回った・「タイトルに戻る」を確かめている）が1つでもあれば止める
+  let hiddenPause = false;
+  let dialogPause = false;
+  let clockStopped = false;
+  const syncClock = () => {
     if (decided || !started) return;
     const now = performance.now();
-    if (document.hidden) {
+    const stop = hiddenPause || dialogPause;
+    if (stop && !clockStopped) {
       countdown.pause(now);
       cancelAnimationFrame(raf);
-    } else {
+      clockStopped = true;
+    } else if (!stop && clockStopped) {
       countdown.resume(now);
       raf = requestAnimationFrame(tick);
+      clockStopped = false;
     }
+  };
+  function pauseClock(on: boolean) {
+    dialogPause = on;
+    syncClock();
+  }
+  const onVisibility = () => {
+    hiddenPause = document.hidden;
+    syncClock();
   };
   document.addEventListener('visibilitychange', onVisibility);
 

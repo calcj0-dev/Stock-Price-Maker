@@ -1272,3 +1272,48 @@ button {
 .screen--news .news-card {
   margin-top: 8px;
 }
+
+/* ---- 左上の「‹ タイトル」（オーナー 2026-11-20） ---- */
+.home-btn {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: 36px;
+  margin-right: 6px;
+  padding: 0 8px 0 2px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.home-btn::before {
+  content: "‹";
+  margin-right: 2px;
+  font-size: 20px;
+  line-height: 1;
+}
+.home-btn:active {
+  background: var(--surface);
+}
+.result-head .result-heading {
+  flex: 1;
+  font-size: 18px;
+}
+.modal--confirm p {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+.modal__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 16px;
+}
+.modal__actions .btn--main {
+  min-height: 48px;
+  font-size: 16px;
+}

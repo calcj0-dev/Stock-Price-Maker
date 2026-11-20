@@ -97,3 +97,46 @@ export function soundButton(): HTMLButtonElement {
   const off = onSettingsChange(() => (el.isConnected ? paint() : off()));
   return el;
 }
+
+/**
+ * 左上の「‹ タイトル」（オーナー 2026-11-20）。confirm を渡すと、押したときに「ここまでの結果は消えます」と確かめる
+ * （遊んでいる途中のニュース・セリの画面）。onOpen・onClose は確かめている間に10秒を止めるため
+ */
+export function homeButton(onHome: () => void, confirm?: { onOpen?: () => void; onClose?: () => void }): HTMLButtonElement {
+  return h('button', {
+    className: 'home-btn',
+    text: t('common.toTitle'),
+    attrs: { type: 'button', 'aria-label': t('common.toTitle') },
+    on: {
+      click: () => {
+        if (!confirm) return onHome();
+        confirm.onOpen?.();
+        let leaving = false;
+        const dialog = h('dialog', { className: 'modal modal--confirm' }, [
+          h('p', { text: t('common.leaveConfirm') }),
+          h('div', { className: 'modal__actions' }, [
+            h('button', { className: 'btn btn--outline', text: t('common.close'), attrs: { type: 'button' }, on: { click: () => dialog.close() } }),
+            h('button', {
+              className: 'btn btn--main',
+              text: t('common.leaveYes'),
+              attrs: { type: 'button' },
+              on: {
+                click: () => {
+                  leaving = true;
+                  dialog.close();
+                },
+              },
+            }),
+          ]),
+        ]);
+        dialog.addEventListener('close', () => {
+          dialog.remove();
+          if (leaving) onHome();
+          else confirm.onClose?.();
+        });
+        document.body.append(dialog);
+        dialog.showModal();
+      },
+    },
+  });
+}
