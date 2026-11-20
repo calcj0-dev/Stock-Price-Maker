@@ -5,7 +5,7 @@ import { initAnalytics } from './analytics';
 import { installFigureDefs } from './ui/figures';
 import { unlockAudio } from './audio';
 import { beginAuction, createGame, decide, nextDay, startPrice, type Game } from './core/game';
-import { market } from './data';
+import { market, scenarios, type Scenario } from './data';
 import { setLocale } from './i18n';
 import type { ScreenView } from './ui/parts';
 import { auctionScreen } from './ui/screens/auction';
@@ -24,6 +24,14 @@ document.addEventListener('keydown', unlockAudio, { capture: true });
 const root = document.querySelector<HTMLElement>('#app');
 let current: ScreenView | null = null;
 let game: Game = createGame();
+/**
+ * 遊ぶ銘柄（オーナー 2026-11-20）：最初はネコマタ食品。5日間を遊び終えると次の銘柄へ進み、最後のあとは最初に戻る。
+ * 端末には保存しない（プライバシー：保存は音の設定だけ）ので、ページを開き直すとネコマタ食品から
+ */
+let scIndex = 0;
+const scenario = (): Scenario => scenarios[scIndex % scenarios.length]!;
+const nextScenario = (): Scenario => scenarios[(scIndex + 1) % scenarios.length]!;
+let finished = false;
 
 function show(view: ScreenView): void {
   current?.unmount?.();
@@ -33,13 +41,15 @@ function show(view: ScreenView): void {
 }
 
 function render(): void {
-  const day = market.days[game.day];
+  const sc = scenario();
+  const day = sc.days[game.day];
   if (game.phase === 'result' || !day) {
-    show(resultScreen(game, () => start(), goTitle));
+    finished = true;
+    show(resultScreen(game, sc, nextScenario(), () => start(), goTitle));
     return;
   }
   if (game.phase === 'news') {
-    show(newsScreen(day, () => {
+    show(newsScreen(day, sc, () => {
       beginAuction(game);
       render();
     }, goTitle));
@@ -47,15 +57,16 @@ function render(): void {
   }
   show(auctionScreen({
     day,
-    prevAnswer: market.days[game.day - 1]?.answer,
-    startPrice: startPrice(game, market.slider),
-    isLastDay: game.day === market.days.length - 1,
+    scenario: sc,
+    prevAnswer: sc.days[game.day - 1]?.answer,
+    startPrice: startPrice(game, market.slider, sc.startDay1),
+    isLastDay: game.day === sc.days.length - 1,
     onDecide: ({ price, timeout }) => {
-      decide(game, market.days, price, timeout);
+      decide(game, sc.days, price, timeout);
       return { judge: game.judges[game.day] ?? 'exact' };
     },
     onNext: () => {
-      nextDay(game, market.days);
+      nextDay(game, sc.days);
       render();
     },
     onHome: goTitle,
@@ -63,6 +74,11 @@ function render(): void {
 }
 
 function start(): void {
+  // 前の銘柄を遊び終えていたら次の銘柄へ（途中でタイトルに戻ったときは同じ銘柄のまま）
+  if (finished) {
+    scIndex = (scIndex + 1) % scenarios.length;
+    finished = false;
+  }
   game = createGame();
   render();
 }

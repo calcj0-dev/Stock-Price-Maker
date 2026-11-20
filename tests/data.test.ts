@@ -12,53 +12,53 @@ describe('T-07 データの検査', () => {
   });
   it('人数が範囲外だと止まる', () => {
     const m = clone(market);
-    m.days[0]!.buyers = [];
+    m.scenarios[0]!.days[0]!.buyers = [];
     expect(check(m).join()).toMatch(/buyers 0 people/);
     const m2 = clone(market);
-    m2.days[1]!.sellers = Array.from({ length: 15 }, (_, i) => 500 + i * 50);
+    m2.scenarios[0]!.days[1]!.sellers = Array.from({ length: 15 }, (_, i) => 500 + i * 50);
     expect(check(m2).join()).toMatch(/sellers 15 people/);
   });
   it('1つの段に人が多すぎると止まる', () => {
     const m = clone(market);
-    m.days[0]!.sellers = [700, 700, 700, 700, 700, 800, 900, 1000];
+    m.scenarios[0]!.days[0]!.sellers = [700, 700, 700, 700, 700, 800, 900, 1000];
     expect(check(m).join()).toMatch(/sellers 5 people at one price/);
   });
   it('同じ側の希望額が近すぎると止まる', () => {
     const m = clone(market);
-    m.days[0]!.buyers[8] = 920;
+    m.scenarios[0]!.days[0]!.buyers[8] = 920;
     expect(check(m).join()).toMatch(/buyers gap 30 < 40/);
   });
   it('正解が2つになると止まる', () => {
     const m = clone(market);
     // 1日目の 1,000円の買いたい人を 1,050円にすると、1,000〜1,050円で同じ件数になる
-    m.days[0]!.buyers[6] = 1050;
+    m.scenarios[0]!.days[0]!.buyers[6] = 1050;
     expect(check(m).join()).toMatch(/not unique/);
   });
   it('answer が計算と違うと止まる', () => {
     const m = clone(market);
-    m.days[2]!.answer = 1130;
+    m.scenarios[0]!.days[2]!.answer = 1130;
     expect(check(m).join()).toMatch(/answer 1130/);
   });
   it('maxVolume・totalMaxVolume が違うと止まる', () => {
     const m = clone(market);
-    m.days[3]!.maxVolume = 9;
+    m.scenarios[0]!.days[3]!.maxVolume = 9;
     expect(check(m).join()).toMatch(/maxVolume 9/);
     expect(check(m).join()).toMatch(/totalMaxVolume/);
   });
   it('金額が範囲外・きざみ外だと止まる', () => {
     const m = clone(market);
-    m.days[0]!.sellers[0] = 705;
+    m.scenarios[0]!.days[0]!.sellers[0] = 705;
     expect(check(m).join()).toMatch(/off the slider grid/);
   });
   it('日数が違うと止まる', () => {
     const m = clone(market);
-    m.days.pop();
-    expect(check(m).join()).toMatch(/days: expected 5/);
+    m.scenarios[0]!.days.pop();
+    expect(check(m).join()).toMatch(/days expected 5/);
   });
   it('ニュースの文がないと止まる', () => {
-    const j = clone(jaJson) as { news: Record<string, unknown> };
-    delete j.news.d3;
-    expect(check(market, config, j).join()).toMatch(/news\.d3\.headline missing/);
+    const j = clone(jaJson) as unknown as { news: Record<string, Record<string, unknown>> };
+    delete j.news.mogura!.d3;
+    expect(check(market, config, j).join()).toMatch(/news\.mogura\.d3\.headline missing/);
   });
   it('称号の文がないと止まる', () => {
     const j = clone(jaJson) as { titles: Record<string, unknown> };

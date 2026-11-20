@@ -6,7 +6,7 @@ import { cue } from '../../audio';
 import { createCountdown } from '../../core/countdown';
 import { clampPrice } from '../../core/game';
 import { volume, type Day, type Judge } from '../../core/market';
-import { config, market } from '../../data';
+import { config, market, type Scenario } from '../../data';
 import { t, td, yen } from '../../i18n';
 import { createBoard } from '../board';
 import { button, h } from '../dom';
@@ -15,6 +15,8 @@ import { homeButton, soundButton, type ScreenView } from '../parts';
 export type Decision = { price: number; timeout: boolean };
 export type AuctionProps = {
   day: Day;
+  /** 今の銘柄 */
+  scenario: Scenario;
   /** 前の日の正解（仕組みの一言の {prev}）。1日目は undefined */
   prevAnswer: number | undefined;
   startPrice: number;
@@ -33,7 +35,7 @@ const POP_GAP_MS = 90;
 export function auctionScreen(p: AuctionProps): ScreenView {
   const { slider } = market;
   const { day } = p;
-  const prevDay = market.days[day.day - 2];
+  const prevDay = p.scenario.days[day.day - 2];
   let price = clampPrice(p.startPrice, slider);
   let decided = false;
   let started = false;
@@ -54,7 +56,7 @@ export function auctionScreen(p: AuctionProps): ScreenView {
     h('div', { className: 'auction-head' }, [
       homeButton(p.onHome, { onOpen: () => pauseClock(true), onClose: () => pauseClock(false) }),
       h('span', { className: 'day-chip', text: t('play.day', { n: day.day }) }),
-      h('span', { className: 'company', text: td(`company.${market.company}`) }),
+      h('span', { className: 'company', text: td(`company.${p.scenario.id}`) }),
       timeText,
       soundButton(),
     ]),
@@ -170,7 +172,7 @@ export function auctionScreen(p: AuctionProps): ScreenView {
         h('p', { className: `reveal__judge reveal__judge--${judge}`, text: t(`reveal.${judge}`) }),
         h('p', { className: 'reveal__volume', text: t('reveal.volume', { n: volume(day, price).volume, max: day.maxVolume }) }),
         h('p', { className: 'reveal__answer', text: t('reveal.answer', { price: yen(day.answer) }) }),
-        h('p', { className: 'reveal__reason', text: td(`reasons.${day.news}`, { prev: yen(p.prevAnswer ?? day.answer), answer: yen(day.answer) }) }),
+        h('p', { className: 'reveal__reason', text: td(`reasons.${p.scenario.id}.${day.news}`, { prev: yen(p.prevAnswer ?? day.answer), answer: yen(day.answer) }) }),
         button(t(p.isLastDay ? 'reveal.toResult' : 'reveal.nextDay'), p.onNext, 'btn btn--main'),
       ].filter((x) => x !== null),
     );

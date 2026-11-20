@@ -2,10 +2,11 @@
 import { describe, expect, it } from 'vitest';
 import * as ref from '../sim/market.mjs';
 import { findAnswer, glow, judge, pairs, score, title, volume } from '../src/core/market';
-import { config, market } from '../src/data';
+import { config, market, scenarios } from '../src/data';
 import jaJson from '../src/data/i18n/ja.json';
 
-const days = market.days;
+const neko = scenarios[0]!;
+const days = neko.days;
 const answers = days.map((d) => d.answer);
 
 describe('T-01 正解の値段', () => {
@@ -16,7 +17,7 @@ describe('T-01 正解の値段', () => {
   });
   it('正解は 1,000 → 1,060 → 1,120 → 1,040 → 980円、満点42組', () => {
     expect(answers).toEqual([1000, 1060, 1120, 1040, 980]);
-    expect(market.totalMaxVolume).toBe(42);
+    expect(neko.totalMaxVolume).toBe(42);
   });
 });
 
@@ -64,7 +65,7 @@ describe('T-03 点数と称号（sim/validate_result.md の8通り）', () => {
   it.each(cases)('%s', (_name, prices, vols, sc, titleId) => {
     const v = days.map((d, i) => volume(d, prices[i]!).volume);
     expect(v).toEqual(vols);
-    expect(score(v, market.totalMaxVolume)).toBe(sc);
+    expect(score(v, neko.totalMaxVolume)).toBe(sc);
     expect(title(prices, v, sc, config.titles)).toBe(titleId);
     expect(title(prices, v, sc, config.titles)).toBe(ref.title(prices, v, sc, config.titles));
     expect(jaJson.titles[titleId as keyof typeof jaJson.titles]).toBeTruthy();
@@ -113,5 +114,30 @@ describe('取引の組（案A）', () => {
     // 1,000円で光る買いたい人のうち一番安い 1,000円の人と、売りたい人のうち一番高い 1,000円の人が最初の組
     expect(d.buyers[r.pairs[0]![0]]).toBe(1000);
     expect(d.sellers[r.pairs[0]![1]]).toBe(1000);
+  });
+});
+
+describe('5つの銘柄（オーナー 2026-11-20）', () => {
+  it('順番はネコマタ食品 → モグラ鉄道 → ポチポチゲームス → ミナト製薬 → ソヨカゼ電力', () => {
+    expect(scenarios.map((s) => s.id)).toEqual(['nekomata', 'mogura', 'pochipochi', 'minato', 'soyokaze']);
+  });
+  it.each(scenarios)('$id：5日とも正解が1つで、answer・maxVolume と同じ', (sc) => {
+    for (const d of sc.days) {
+      const r = findAnswer(d, market.slider);
+      expect(r.prices).toEqual([d.answer]);
+      expect(r.max).toBe(d.maxVolume);
+    }
+  });
+  it.each(scenarios)('$id：称号の出方がネコマタ食品と同じ考え方になる', (sc) => {
+    const ans = sc.days.map((d) => d.answer);
+    const play = (prices: number[]) => {
+      const v = sc.days.map((d, i) => volume(d, prices[i]!).volume);
+      const s = score(v, sc.totalMaxVolume);
+      return { s, t: title(prices, v, s, config.titles) };
+    };
+    expect(play(ans)).toEqual({ s: 100, t: 't_legend' });
+    expect(play([ans[0]! + 50, ...ans.slice(1)]).t).toBe('t_pro');
+    expect(play(ans.map((a) => a + 50)).t).toBe('t_novice');
+    expect(play(Array(5).fill(ans[0])).t).toBe('t_still');
   });
 });

@@ -17,9 +17,12 @@ export function createGame(): Game {
   return { day: 0, prices: [], volumes: [], judges: [], timeouts: [], phase: 'news' };
 }
 
-/** つまみの始まり：1日目は startDay1、2日目からは前の日に自分が決めた値段（設計書 1.2・T-06） */
-export function startPrice(game: Game, slider: Slider): number {
-  return game.prices[game.day - 1] ?? slider.startDay1;
+/**
+ * つまみの始まり：1日目は startDay1、2日目からは前の日に自分が決めた値段（設計書 1.2・T-06）。
+ * 銘柄ごとに1日目の始まりを決められる（firstDay。正解から同じだけ離す。オーナー 2026-11-20）
+ */
+export function startPrice(game: Game, slider: Slider, firstDay?: number): number {
+  return game.prices[game.day - 1] ?? firstDay ?? slider.startDay1;
 }
 
 export function beginAuction(game: Game): void {

@@ -2,7 +2,9 @@
 import { describe, expect, it } from 'vitest';
 import { createCountdown } from '../src/core/countdown';
 import { beginAuction, clampPrice, createGame, decide, nextDay, startPrice } from '../src/core/game';
-import { config, market } from '../src/data';
+import { config, market, scenarios } from '../src/data';
+
+const days = scenarios[0]!.days;
 
 describe('T-05 10秒の時間切れ', () => {
   it('10秒で時間切れになる', () => {
@@ -25,7 +27,7 @@ describe('T-05 10秒の時間切れ', () => {
   it('時間切れは、その時点の値段で決めたことにする', () => {
     const g = createGame();
     beginAuction(g);
-    decide(g, market.days, 950, true);
+    decide(g, days, 950, true);
     expect(g.prices).toEqual([950]);
     expect(g.timeouts).toEqual([true]);
     expect(g.volumes).toEqual([6]);
@@ -37,8 +39,8 @@ describe('T-06 つまみの始まり', () => {
     const g = createGame();
     expect(startPrice(g, market.slider)).toBe(market.slider.startDay1);
     beginAuction(g);
-    decide(g, market.days, 1030);
-    nextDay(g, market.days);
+    decide(g, days, 1030);
+    nextDay(g, days);
     expect(startPrice(g, market.slider)).toBe(1030);
   });
 });
@@ -46,12 +48,12 @@ describe('T-06 つまみの始まり', () => {
 describe('5日の進み方', () => {
   it('ニュース → セリ → 答え合わせ を5回で結果', () => {
     const g = createGame();
-    for (const d of market.days) {
+    for (const d of days) {
       expect(g.phase).toBe('news');
       beginAuction(g);
-      decide(g, market.days, d.answer);
+      decide(g, days, d.answer);
       expect(g.phase).toBe('reveal');
-      nextDay(g, market.days);
+      nextDay(g, days);
     }
     expect(g.phase).toBe('result');
     expect(g.volumes).toEqual([7, 8, 8, 10, 9]);
@@ -64,3 +66,13 @@ describe('5日の進み方', () => {
   });
 });
 
+
+describe('銘柄ごとの1日目の始まり（オーナー 2026-11-20）', () => {
+  it('どの銘柄も、1日目の正解から同じだけ（300円）安い所から始まる', () => {
+    for (const sc of scenarios) {
+      const g = createGame();
+      const s = startPrice(g, market.slider, sc.startDay1);
+      expect(sc.days[0]!.answer - s).toBe(300);
+    }
+  });
+});

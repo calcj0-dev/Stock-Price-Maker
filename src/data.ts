@@ -8,7 +8,9 @@ import marketJson from './data/market.json';
 
 /** チュートリアルの行列（本番より少ない人数。オーナー 2026-11-19：練習の日の代わりにチュートリアル） */
 export type Tutorial = { buyers: number[]; sellers: number[]; answer: number; maxVolume: number; start: number };
-export type Market = { company: string; slider: Slider; totalMaxVolume: number; tutorial: Tutorial; days: Day[] };
+/** 銘柄（5日分の問題）。id は会社の文言・ニュース・仕組みの一言のキーにも使う（オーナー 2026-11-20：5銘柄。遊ぶたびに順番に変わる） */
+export type Scenario = { id: string; totalMaxVolume: number; days: Day[]; /** 1日目のつまみの始まり（なければ slider.startDay1） */ startDay1?: number };
+export type Market = { slider: Slider; tutorial: Tutorial; scenarios: Scenario[] };
 export type GameConfig = {
   timeLimitSec: number;
   warnAtSec: number;
@@ -58,18 +60,15 @@ export function lookup(messages: unknown, path: string): string | undefined {
   return typeof cur === 'string' ? cur : undefined;
 }
 
-/** 設計書 4章の検査。問題を文の配列で返す（空なら OK） */
-export function validateData(market: Market, config: GameConfig, messages: unknown): string[] {
+/** 銘柄1つの検査：5日ある、人数と段、正解が1つ、文言がある */
+function validateScenario(sc: Scenario, slider: Slider, messages: unknown): string[] {
   const errors: string[] = [];
-  const { slider } = market;
   const onGrid = (v: number) => Number.isInteger(v) && v >= slider.min && v <= slider.max && (v - slider.min) % slider.step === 0;
-
-  if (!onGrid(slider.startDay1)) errors.push(`slider.startDay1 ${slider.startDay1} is off the slider grid`);
-  if (market.days.length !== DAYS) errors.push(`days: expected ${DAYS}, got ${market.days.length}`);
-  if (lookup(messages, `company.${market.company}`) === undefined) errors.push(`company ${market.company} has no text`);
-
-  market.days.forEach((d, i) => {
-    const tag = `day ${i + 1}`;
+  if (sc.startDay1 !== undefined && !onGrid(sc.startDay1)) errors.push(`${sc.id}: startDay1 ${sc.startDay1} is off the slider grid`);
+  if (sc.days.length !== DAYS) errors.push(`${sc.id}: days expected ${DAYS}, got ${sc.days.length}`);
+  if (lookup(messages, `company.${sc.id}`) === undefined) errors.push(`company ${sc.id} has no text`);
+  sc.days.forEach((d, i) => {
+    const tag = `${sc.id} day ${i + 1}`;
     if (d.day !== i + 1) errors.push(`${tag}: day number is ${d.day}`);
     for (const [side, list] of [['buyers', d.buyers], ['sellers', d.sellers]] as const) {
       if (list.length < PEOPLE_MIN || list.length > PEOPLE_MAX) errors.push(`${tag}: ${side} ${list.length} people (allowed ${PEOPLE_MIN}-${PEOPLE_MAX})`);
@@ -82,13 +81,25 @@ export function validateData(market: Market, config: GameConfig, messages: unkno
     if (r.prices[0] !== d.answer) errors.push(`${tag}: answer ${d.answer} but computed ${r.prices.join(',')}`);
     if (r.max !== d.maxVolume) errors.push(`${tag}: maxVolume ${d.maxVolume} but computed ${r.max}`);
     for (const k of ['headline', 'body']) {
-      if (lookup(messages, `news.${d.news}.${k}`) === undefined) errors.push(`${tag}: news.${d.news}.${k} missing`);
+      if (lookup(messages, `news.${sc.id}.${d.news}.${k}`) === undefined) errors.push(`${tag}: news.${sc.id}.${d.news}.${k} missing`);
     }
-    if (lookup(messages, `reasons.${d.news}`) === undefined) errors.push(`${tag}: reasons.${d.news} missing`);
+    if (lookup(messages, `reasons.${sc.id}.${d.news}`) === undefined) errors.push(`${tag}: reasons.${sc.id}.${d.news} missing`);
   });
+  const total = sc.days.reduce((a, d) => a + d.maxVolume, 0);
+  if (total !== sc.totalMaxVolume) errors.push(`${sc.id}: totalMaxVolume ${sc.totalMaxVolume} but sum is ${total}`);
+  return errors;
+}
 
-  const total = market.days.reduce((a, d) => a + d.maxVolume, 0);
-  if (total !== market.totalMaxVolume) errors.push(`totalMaxVolume ${market.totalMaxVolume} but sum is ${total}`);
+/** 設計書 4章の検査。問題を文の配列で返す（空なら OK） */
+export function validateData(market: Market, config: GameConfig, messages: unknown): string[] {
+  const errors: string[] = [];
+  const { slider } = market;
+  const onGrid = (v: number) => Number.isInteger(v) && v >= slider.min && v <= slider.max && (v - slider.min) % slider.step === 0;
+
+  if (!onGrid(slider.startDay1)) errors.push(`slider.startDay1 ${slider.startDay1} is off the slider grid`);
+  if (market.scenarios.length === 0) errors.push('scenarios: none');
+  if (new Set(market.scenarios.map((s) => s.id)).size !== market.scenarios.length) errors.push('scenarios: duplicate id');
+  for (const sc of market.scenarios) errors.push(...validateScenario(sc, slider, messages));
 
   for (const t of config.titles) if (lookup(messages, `titles.${t.id}`) === undefined) errors.push(`titles.${t.id} missing`);
   const mins = config.titles.flatMap((t) => (t.rule === 'score' ? [t.min] : []));
@@ -116,6 +127,8 @@ export function siteUrl(): string {
 }
 
 export const market = marketJson as Market;
+/** 遊ぶ順番の銘柄（market.json の並び順） */
+export const scenarios = market.scenarios;
 export const config = configJson as GameConfig;
 /** 言語ごとの文言。言語を足すときは JSON を作ってここに1行足す（C6） */
 export const messagesByLocale = { ja: jaJson } satisfies Record<string, Messages>;
