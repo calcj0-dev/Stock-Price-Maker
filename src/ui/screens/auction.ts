@@ -44,6 +44,8 @@ export function auctionScreen(p: AuctionProps): ScreenView {
 
   const timeText = h('span', { className: 'time-left', text: t('play.timeLeft', { sec: config.timeLimitSec }) });
   const timeBar = h('span', { className: 'time-bar__fill' });
+  // 盤の上の大きな残り秒数（オーナー 2026-11-20：10秒の数え方が分かりづらい → 大きく出す）
+  const bigTime = h('div', { className: 'big-time', attrs: { 'aria-hidden': 'true' } });
 
   const minus = button(t('play.minus'), () => setPrice(price - slider.fineStep), 'btn btn--fine');
   const plus = button(t('play.plus'), () => setPrice(price + slider.fineStep), 'btn btn--fine');
@@ -113,6 +115,9 @@ export function auctionScreen(p: AuctionProps): ScreenView {
     timeText.textContent = t('play.timeLeft', { sec: Math.ceil(left / 1000) });
     timeBar.style.transform = `scaleX(${left / limitMs})`;
     el.classList.toggle('warn', left <= config.warnAtSec * 1000);
+    // 棒の色：たっぷり（緑）→ 半分を切ったら黄色 → 残り3秒で赤
+    el.classList.toggle('mid', left <= limitMs / 2 && left > config.warnAtSec * 1000);
+    bigTime.textContent = String(Math.ceil(left / 1000));
     // 残り3秒から1秒ごとに「チッ」
     const sec = Math.ceil(left / 1000);
     if (sec <= config.warnAtSec && sec > 0 && sec !== lastTick) {
@@ -154,6 +159,8 @@ export function auctionScreen(p: AuctionProps): ScreenView {
   document.addEventListener('visibilitychange', onVisibility);
 
   // ---- 決める → 答え合わせ（組を線でつなぐ。正解の線を重ねる） ----
+  board.el.append(bigTime);
+
   function doDecide(timeout: boolean) {
     if (decided) return;
     decided = true;

@@ -1453,3 +1453,51 @@ body {
 .modal--board .board {
   box-shadow: none;
 }
+
+/* ---- 10秒を分かりやすく（オーナー 2026-11-20） ----
+   棒を太くし、緑 → 黄色（半分を切ったら）→ 赤（残り3秒）。盤の上に大きな残り秒数 */
+.screen--ladder .time-bar {
+  height: 10px;
+  border-radius: 5px;
+}
+.screen--ladder .time-bar__fill {
+  background: var(--buy);
+  transition: background 0.3s;
+}
+.screen--ladder.mid .time-bar__fill {
+  background: #e6b422;
+}
+.screen--ladder.warn .time-bar__fill {
+  background: var(--warn);
+}
+.big-time {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  min-width: 64px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.85);
+  color: var(--buy);
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transition: color 0.3s;
+}
+.big-time:empty {
+  display: none;
+}
+.mid .big-time {
+  color: #c99a0e;
+}
+.warn .big-time {
+  color: var(--warn);
+}
+.decided .big-time {
+  display: none;
+}
