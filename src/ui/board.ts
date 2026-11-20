@@ -1,15 +1,15 @@
-// 値段のはしごの盤（案1）。セリの画面と、結果画面の「正解を見る」で使う
-// 真ん中に縦の値段の目盛り。人（顔）は自分の希望額の高さに置く。線より上の買いたい人・線より下の売りたい人が光る
-// 目盛りは5日とも同じ（ニュースで行列が上下に動いて見える）
+// 値段のはしごの盤（案1）。セリの画面・チュートリアル・結果画面の「正解を見る」で使う
+// 真ん中に縦の値段の目盛り。人は自分の希望額の高さに置く。同じ値段の人は横に並ぶ（段。オーナー 2026-11-20）
+// 線より上の買いたい人・線より下の売りたい人が光る。目盛りは5日とも同じ（ニュースで行列が上下に動いて見える）
 
 import { glow, pairs, type Day } from '../core/market';
-
-/** 盤に必要なのは行列だけ（本番の日も、チュートリアルの行列も使える） */
-export type BoardQueue = Pick<Day, 'buyers' | 'sellers'>;
 import { market } from '../data';
 import { t, yen } from '../i18n';
 import { h } from './dom';
 import { face } from './parts';
+
+/** 盤に必要なのは行列だけ（本番の日も、チュートリアルの行列も使える） */
+export type BoardQueue = Pick<Day, 'buyers' | 'sellers'>;
 
 const TICK = 100;
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -33,19 +33,38 @@ export type Board = {
   setEnabled(on: boolean): void;
 };
 
+/** 段：同じ値段に並ぶ人のまとまり。値段の数字は段ごとに1つ */
+type Level = { el: HTMLElement; price: number; faces: HTMLElement[]; first: number };
+/** 1人ずつ（光る・組になる・あぶれるは人ごと） */
+type Person = { level: Level; f: HTMLElement };
+
 export function createBoard(day: BoardQueue, opts: { className?: string; markerKind?: 'answer' | 'mine' } = {}): Board {
   const lo = market.slider.min;
   const hi = market.slider.max;
   const pos = (v: number) => ((hi - v) / (hi - lo)) * 100;
 
-  const rung = (side: 'buy' | 'sell', v: number) => {
-    const f = face(side);
-    const num = h('span', { className: 'rung__price', text: yen(v) });
-    const el = h('div', { className: `rung rung--${side}`, attrs: { style: `top:${pos(v)}%` } }, side === 'buy' ? [num, f] : [f, num]);
-    return { el, f };
+  const makeSide = (side: 'buy' | 'sell', prices: number[]) => {
+    const levels = new Map<number, Level & { box: HTMLElement }>();
+    const people: Person[] = prices.map((v, i) => {
+      let lv = levels.get(v);
+      if (!lv) {
+        const num = h('span', { className: 'rung__price', text: yen(v) });
+        const box = h('span', { className: 'rung__faces' });
+        const el = h('div', { className: `rung rung--${side}`, attrs: { style: `top:${pos(v)}%` } }, side === 'buy' ? [num, box] : [box, num]);
+        lv = { el, price: v, faces: [], first: i, box };
+        levels.set(v, lv);
+      }
+      const f = face(side);
+      lv.box.append(f);
+      lv.faces.push(f);
+      return { level: lv, f };
+    });
+    return { levels: [...levels.values()], people };
   };
-  const buys = day.buyers.map((v) => rung('buy', v));
-  const sells = day.sellers.map((v) => rung('sell', v));
+  const buy = makeSide('buy', day.buyers);
+  const sell = makeSide('sell', day.sellers);
+  const allLevels = () => [...buy.levels, ...sell.levels];
+  const allPeople = () => [...buy.people, ...sell.people];
 
   const ticks: HTMLElement[] = [];
   for (let v = Math.ceil((lo + 1) / TICK) * TICK; v < hi; v += TICK) {
@@ -72,8 +91,7 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
     sellZone,
     ...ticks,
     svg as unknown as HTMLElement,
-    ...buys.map((x) => x.el),
-    ...sells.map((x) => x.el),
+    ...allLevels().map((x) => x.el),
     marker,
     line,
   ]);
@@ -84,9 +102,10 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
   const board: Board = {
     el,
     setPrice(price) {
+      // 同じ段の人は同じ値段なので、光るかどうかは段ごとに決まる
       const g = glow(day, price);
-      buys.forEach((x, i) => x.el.classList.toggle('on', g.buyers[i] === true));
-      sells.forEach((x, i) => x.el.classList.toggle('on', g.sellers[i] === true));
+      for (const lv of buy.levels) lv.el.classList.toggle('on', g.buyers[lv.first] === true);
+      for (const lv of sell.levels) lv.el.classList.toggle('on', g.sellers[lv.first] === true);
       const y = `${pos(price)}%`;
       line.style.top = y;
       buyZone.style.height = y;
@@ -100,7 +119,8 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
       markerLabel.textContent = t('play.price', { price: yen(price) });
     },
     clearPairs() {
-      for (const x of [...buys, ...sells]) x.el.classList.remove('alone', 'paired');
+      for (const p of allPeople()) p.f.classList.remove('alone', 'paired');
+      for (const lv of allLevels()) lv.el.classList.remove('alone');
       svg.replaceChildren();
     },
     focus(side) {
@@ -111,18 +131,19 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
       svg.classList.toggle('pair-lines--static', !animate);
       board.clearPairs();
       const r = pairs(day, price);
-      for (const i of r.aloneBuyers) buys[i]?.el.classList.add('alone');
-      for (const i of r.aloneSellers) sells[i]?.el.classList.add('alone');
+      for (const i of r.aloneBuyers) buy.people[i]?.f.classList.add('alone');
+      for (const i of r.aloneSellers) sell.people[i]?.f.classList.add('alone');
+      // 段の全員があぶれたら、段の数字にも線を引く
+      for (const lv of allLevels()) lv.el.classList.toggle('alone', lv.faces.every((f) => f.classList.contains('alone')));
       const box = el.getBoundingClientRect();
       const center = (f: HTMLElement) => {
         const b = f.getBoundingClientRect();
         return { x: b.left + b.width / 2 - box.left, y: b.top + b.height / 2 - box.top };
       };
       svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-      svg.replaceChildren();
       r.pairs.forEach(([bi, si], k) => {
-        const bf = buys[bi]?.f;
-        const sf = sells[si]?.f;
+        const bf = buy.people[bi]?.f;
+        const sf = sell.people[si]?.f;
         if (!bf || !sf) return;
         const a = center(bf);
         const b = center(sf);
@@ -132,26 +153,27 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
         path.setAttribute('pathLength', '1');
         path.style.animationDelay = `${k * 90}ms`;
         svg.append(path);
-        buys[bi]?.el.classList.add('paired');
-        sells[si]?.el.classList.add('paired');
+        bf.classList.add('paired');
+        sf.classList.add('paired');
       });
       return r.pairs.length;
     },
     slideFrom(prev, ms) {
       if (ms <= 0) return Promise.resolve();
-      // 前の日もいた人は前の位置から動く。新しく来た人はふわっと現れ、帰った人はすっと消える（人数はニュースで変わる）
-      const stay = (list: { el: HTMLElement }[], prevList: number[]) =>
-        list.forEach((x, i) => {
-          const v = prevList[i];
-          if (v === undefined) x.el.classList.add('arrive');
-          else x.el.style.top = `${pos(v)}%`;
-        });
-      stay(buys, prev.buyers);
-      stay(sells, prev.sellers);
+      // 前の日もいた人の段は前の位置から動く。新しく来た人の段はふわっと現れ、帰った人はすっと消える
+      const stay = (levels: Level[], prevList: number[]) => {
+        for (const lv of levels) {
+          const v = prevList[lv.first];
+          if (v === undefined) lv.el.classList.add('arrive');
+          else lv.el.style.top = `${pos(v)}%`;
+        }
+      };
+      stay(buy.levels, prev.buyers);
+      stay(sell.levels, prev.sellers);
       const leaving = [
-        ...prev.buyers.slice(day.buyers.length).map((v) => rung('buy', v).el),
-        ...prev.sellers.slice(day.sellers.length).map((v) => rung('sell', v).el),
-      ];
+        ...makeSide('buy', prev.buyers.slice(day.buyers.length)).levels,
+        ...makeSide('sell', prev.sellers.slice(day.sellers.length)).levels,
+      ].map((x) => x.el);
       el.append(...leaving);
       el.classList.add('sliding');
       el.style.setProperty('--slide-ms', `${ms}ms`);
@@ -159,9 +181,10 @@ export function createBoard(day: BoardQueue, opts: { className?: string; markerK
         // 1フレーム描いてから今日の位置へ（動きを見せる）
         requestAnimationFrame(() =>
           requestAnimationFrame(() => {
-            buys.forEach((x, i) => (x.el.style.top = `${pos(day.buyers[i]!)}%`));
-            sells.forEach((x, i) => (x.el.style.top = `${pos(day.sellers[i]!)}%`));
-            for (const x of [...buys, ...sells]) x.el.classList.remove('arrive');
+            for (const lv of allLevels()) {
+              lv.el.style.top = `${pos(lv.price)}%`;
+              lv.el.classList.remove('arrive');
+            }
             for (const g of leaving) g.classList.add('gone');
             setTimeout(() => {
               el.classList.remove('sliding');

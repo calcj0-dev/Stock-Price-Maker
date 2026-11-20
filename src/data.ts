@@ -28,11 +28,19 @@ export type Messages = typeof jaJson;
 /** 片側の人数の範囲（人数はニュースで変わる。オーナー 2026-11-19）。多すぎると盤が混み合う */
 const PEOPLE_MIN = 1;
 const PEOPLE_MAX = 14;
-/** 同じ側の人どうしの希望額の最小の差（盤で顔と数字が重ならないように） */
+/** 同じ側の段（同じ値段のまとまり）どうしの最小の差（盤で重ならないように）。同じ値段の人は横に並ぶ（オーナー 2026-11-20） */
 const MIN_GAP = 40;
+/** 1つの段に並べられる人数（盤の幅に収まるように） */
+const MAX_PER_LEVEL = 4;
+
+function maxPerLevel(values: number[]): number {
+  const n = new Map<number, number>();
+  for (const v of values) n.set(v, (n.get(v) ?? 0) + 1);
+  return Math.max(0, ...n.values());
+}
 
 function minGap(values: number[]): number {
-  const v = [...values].sort((a, b) => a - b);
+  const v = [...new Set(values)].sort((a, b) => a - b);
   let g = Infinity;
   for (let i = 1; i < v.length; i++) g = Math.min(g, v[i]! - v[i - 1]!);
   return g;
@@ -66,6 +74,7 @@ export function validateData(market: Market, config: GameConfig, messages: unkno
     for (const [side, list] of [['buyers', d.buyers], ['sellers', d.sellers]] as const) {
       if (list.length < PEOPLE_MIN || list.length > PEOPLE_MAX) errors.push(`${tag}: ${side} ${list.length} people (allowed ${PEOPLE_MIN}-${PEOPLE_MAX})`);
       if (minGap(list) < MIN_GAP) errors.push(`${tag}: ${side} gap ${minGap(list)} < ${MIN_GAP}`);
+      if (maxPerLevel(list) > MAX_PER_LEVEL) errors.push(`${tag}: ${side} ${maxPerLevel(list)} people at one price (max ${MAX_PER_LEVEL})`);
     }
     for (const v of [...d.buyers, ...d.sellers]) if (!onGrid(v)) errors.push(`${tag}: price ${v} is off the slider grid`);
     const r = findAnswer(d, slider);

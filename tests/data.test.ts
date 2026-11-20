@@ -18,6 +18,11 @@ describe('T-07 データの検査', () => {
     m2.days[1]!.sellers = Array.from({ length: 15 }, (_, i) => 500 + i * 50);
     expect(check(m2).join()).toMatch(/sellers 15 people/);
   });
+  it('1つの段に人が多すぎると止まる', () => {
+    const m = clone(market);
+    m.days[0]!.sellers = [700, 700, 700, 700, 700, 800, 900, 1000];
+    expect(check(m).join()).toMatch(/sellers 5 people at one price/);
+  });
   it('同じ側の希望額が近すぎると止まる', () => {
     const m = clone(market);
     m.days[0]!.buyers[8] = 920;

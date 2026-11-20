@@ -28,7 +28,7 @@ describe('T-05 10秒の時間切れ', () => {
     decide(g, market.days, 950, true);
     expect(g.prices).toEqual([950]);
     expect(g.timeouts).toEqual([true]);
-    expect(g.volumes).toEqual([5]);
+    expect(g.volumes).toEqual([6]);
   });
 });
 

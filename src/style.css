@@ -1030,3 +1030,16 @@ button {
 .daily .btn--small {
   margin-top: 0;
 }
+
+/* ---- 段：同じ値段の人は横に並ぶ（オーナー 2026-11-20） ---- */
+.rung__faces {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.rung--buy .rung__faces {
+  flex-direction: row-reverse;
+}
+.face.alone {
+  opacity: 0.45;
+}
